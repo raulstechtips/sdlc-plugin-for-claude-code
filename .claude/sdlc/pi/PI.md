@@ -12,10 +12,11 @@ Ensure all 8 core SDLC skills work correctly end-to-end through a full lifecycle
 
 ## Epics
 
-### Epic: Bug Fixes & Stabilization (#TBD)
-- Feature: Planning Skills Stabilization (#TBD) — validate and fix sdlc:init, sdlc:define, sdlc:capture
-- Feature: Execution Skills Stabilization (#TBD) — validate and fix sdlc:create, sdlc:update
-- Feature: Monitoring Skills Stabilization (#TBD) — validate and fix sdlc:status, sdlc:reconcile, sdlc:retro
+### Epic: Bug Fixes & Stabilization (#1)
+- Feature: Define Skill Overhaul (#2) — Rework sdlc:define to mirror superpowers brainstorming: task tracking, phase-by-phase presentation, structured draft review
+- Feature: Other Planning Skills Stabilization (#3) — Validate and fix sdlc:init, sdlc:capture
+- Feature: Execution Skills Stabilization (#4) — Validate and fix sdlc:create, sdlc:update
+- Feature: Monitoring Skills Stabilization (#5) — Validate and fix sdlc:status, sdlc:reconcile, sdlc:retro
 
 ### Epic: Complete Update Reference Guides (#TBD)
 - Feature: Write Missing Update Guides (#TBD) — create pi-update.md, epic-update.md, feature-update.md, story-update.md
