@@ -26,17 +26,7 @@
    - **API Contracts** (endpoints this story implements or modifies)
    - **Tech Stack** (frameworks and patterns to use)
 
-For STANDARD and DEEP stories, also dispatch a research subagent:
-
-```
-Use Agent tool to explore the implementation context.
-Prompt: "Search for existing patterns related to [story topic]:
-1. Find files that will be modified (exact paths)
-2. Identify existing patterns to follow (similar implementations)
-3. Check for related tests (test file locations, test patterns used)
-4. Note any utilities or helpers that should be reused
-Do not modify any files."
-```
+For STANDARD and DEEP stories, a research Agent is dispatched during discovery — see the "Discovery by Depth" section below for the dispatch prompt and timing.
 
 ## Question Templates
 
