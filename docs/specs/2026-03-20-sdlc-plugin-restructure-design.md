@@ -13,6 +13,7 @@ The core disconnect: the depth system micromanages the creative process when it 
 3. **Classification is discovered, not declared.** Users can bring an idea and the skill helps figure out what level it is.
 4. **Impact analysis executes decisions, it doesn't make them.** Creative decisions happen during brainstorming. The impact phase inventories those decisions and dispatches agents to carry them out.
 5. **One source of truth for operational logic.** Shared reference files, not duplicated logic across skills and agents.
+6. **Amended two-phase principle.** The original principle was "define brainstorms, create/update execute — never mix." This redesign amends it: define may dispatch operational agents for **side-effect artifacts** (PI updates, parent issue updates, issue closures) discovered during impact analysis. The **primary artifact** (the one brainstormed) still follows the two-phase flow — define produces the draft, create publishes it. Side-effect execution is scoped to cascading updates that the user confirms one by one; define never silently mutates artifacts.
 
 ## Artifact Definitions
 
@@ -75,6 +76,11 @@ Each level only plans one layer deep. PI defines epics as goals. Epic brainstorm
     update/
       SKILL.md
       reference/                    ← execution references only
+        epic-update.md
+        feature-update.md
+        story-update.md
+        prd-update.md
+        pi-update.md
     init/
     capture/
     status/
@@ -97,7 +103,8 @@ Each level only plans one layer deep. PI defines epics as goals. Epic brainstorm
 |----------|----------|---------|
 | `templates/` | Rigid output formats (frontmatter, sections, formatting) | define (drafting), create, update, agents |
 | `skills/define/reference/` | Brainstorming guides (lightweight checklists) | define only |
-| `skills/create/reference/` | Execution references (gh commands, validation, procedures) | create skill, create-agent, update skill, update-agent |
+| `skills/create/reference/` | Execution references for creating new artifacts (gh commands, validation, procedures) | create skill, create-agent |
+| `skills/update/reference/` | Execution references for updating existing artifacts (surgical edits, escalation rules) | update skill, update-agent |
 
 ## Define Skill — Orchestrator Design
 
@@ -129,7 +136,7 @@ Each level only plans one layer deep. PI defines epics as goals. Epic brainstorm
    - As each impact is confirmed, dispatch the appropriate operational agent (create-agent or update-agent)
    - Independent updates can run in parallel; dependent updates run sequentially
 
-9. **Announce next step** — "Draft saved. Run `/sdlc:create <level>` when ready, or I can dispatch the create agent now."
+9. **Announce next step** — "Draft saved. Run `/sdlc:create <level>` when ready, or I can dispatch the create agent now." This refers to the **primary artifact** only — the one brainstormed. Side-effect artifacts (PI updates, parent issue edits, closures) were already dispatched in Step 8 as the user confirmed each one.
 
 ### What's Removed from Current Define
 
@@ -151,11 +158,81 @@ The skill opens by meeting the user where they are. It has an internal checklist
 
 **Reclassification:** If mid-brainstorm the scope grows or shrinks, the skill adapts naturally: "We started talking about a feature, but this is really its own epic — there are at least three distinct chunks of work here. Want to reframe this as an epic?" The brainstorm continues, it doesn't restart.
 
+### Reshape Flow
+
+Reshaping existing artifacts follows the same process with these adjustments:
+
+**Detection:** Issue number in args (`/sdlc:define epic #12`) = reshape. Keywords like "reshape/rethink/revise/update" in the conversation = reshape. Existing draft in drafts directory = ask user if they're continuing.
+
+**Brainstorming:** The skill loads the existing artifact (from GitHub or git) as context. The conversation explores what needs to change and why. Same creative freedom — no prescribed questions.
+
+**Draft:** Uses the same template as new artifacts, but includes a `## Changes` section:
+
+```markdown
+## Changes
+
+| Section | Change | Old Value | New Value |
+|---------|--------|-----------|-----------|
+| <section> | <what changed> | <old> | <new> |
+```
+
+**Impact analysis:** Same confirm-then-dispatch loop, but impacts are likely different (e.g., "Feature #15's parent epic changed scope — does Feature #15 still belong?").
+
+**Announce next step:** "Draft saved with changes documented. Run `/sdlc:update <level> <number>` to apply the changes, or I can dispatch the update agent now."
+
+### Pre-Flight Checks
+
+Before brainstorming can begin, the skill verifies prerequisites exist:
+
+| Level | Prerequisites |
+|-------|--------------|
+| PRD | Check if `.claude/sdlc/prd/PRD.md` exists (greenfield vs brownfield vs reshape) |
+| PI | PRD exists. Check for previous retros. Check for active PI. |
+| Epic | PRD exists. PI exists. |
+| Feature | PRD exists. PI exists. Parent epic resolvable via `gh issue view`. |
+| Story | PRD exists. Parent feature and parent epic resolvable via `gh issue view`. |
+
+If prerequisites are missing, the skill tells the user what needs to exist first and suggests the appropriate `/sdlc:define` invocation.
+
+### Draft File Naming
+
+Drafts are written to `.claude/sdlc/drafts/<level>-<name>.md`. When level is not known at invocation time, the file is created after scope classification (Step 3). For reshapes: `<level>-<issue-number>.md`.
+
 ## Brainstorming Guides
 
 Lightweight internal checklists, one per level. They tell the skill "before you can draft this artifact, make sure you understand these things." The skill weaves them into natural conversation — they're a pilot's checklist, not a script.
 
-Example (Epic Brainstorming Guide):
+### PRD Brainstorming Guide
+
+```
+Before drafting a PRD, make sure you understand:
+- What is this project and why does it exist?
+- What's the tech stack?
+- What's the high-level architecture?
+- What are the key data models?
+- What are the API contracts or interfaces?
+- What are the security constraints?
+- What's the roadmap (high-level phases)?
+- What's in scope and out of scope?
+- What decisions have already been made and why?
+For brownfield projects: dispatch a research agent to analyze the existing codebase first.
+```
+
+### PI Brainstorming Guide
+
+```
+Before drafting a PI, make sure you understand:
+- What's the theme for this increment? (one-line summary of focus)
+- What epics should be tackled? (goals, not implementation details)
+- What does success look like for each epic?
+- What are the rough scope seeds for each epic? (bullet points, not features)
+- Are there cross-epic dependencies?
+- Which epics can be parallelized (worktree strategy)?
+- What's the timeline?
+- Any carry-over from previous PI?
+```
+
+### Epic Brainstorming Guide
 
 ```
 Before drafting an epic, make sure you understand:
@@ -165,6 +242,33 @@ Before drafting an epic, make sure you understand:
 - What's the priority relative to other epics?
 - Any dependencies on other epics?
 - What areas of the codebase does this touch?
+```
+
+### Feature Brainstorming Guide
+
+```
+Before drafting a feature, make sure you understand:
+- What does this feature do? (description, not implementation)
+- What's the acceptance criteria?
+- Is this directly implementable (size:small) or does it need decomposition (size:large)?
+- If large: what are the stories?
+- What's NOT in scope for this feature?
+- Any dependencies on other features or stories?
+- Which parent epic does this belong to?
+```
+
+### Story Brainstorming Guide
+
+```
+Before drafting a story, make sure you understand:
+- What's the single task to accomplish?
+- What are the acceptance criteria? (specific, testable)
+- What files will be created or modified?
+- Are there existing patterns to follow?
+- Any technical considerations or edge cases?
+- What blocks this or what does this block?
+- Which parent feature and epic does this belong to?
+For stories with unclear file scope: dispatch a research agent to find relevant files and patterns.
 ```
 
 The skill doesn't ask these as a list. It checks them off internally as the conversation covers each point. Some might get answered without being asked directly.
@@ -291,27 +395,78 @@ status: draft
 
 ### impact-analysis-agent
 
-Dispatched by define during the impact phase. Receives brainstorm context (what was decided, what level, what reclassifications happened). Reads the current state of the PI, relevant epics, features. Returns a structured list of impacts for define to present to the user one by one.
+Dispatched by define during the impact phase.
+
+**Input (passed via agent prompt):**
+- Summary of brainstorm decisions: what artifact was defined, at what level, key scope decisions
+- Any reclassifications that happened during brainstorming
+- The draft file path
+- Current PI path, relevant epic/feature issue numbers
+
+**Output (returned to define):**
+```
+Impacts found: N
+
+1. [category] [target]: [description]
+   - Category: pi-update | epic-update | feature-update | story-update | prd-update | issue-closure | new-artifact
+   - Target: file path or issue number
+   - Description: what needs to change and why
+
+2. [category] [target]: [description]
+   ...
+```
+
+**Impact categories the agent scans for:**
+- PI updates (new epic added, epic scope changed, epic removed/deferred)
+- Parent issue updates (new child added, child moved, scope description changed)
+- Sibling issue updates (dependency changes affecting siblings)
+- PRD updates (roadmap changes, acceptance criteria changes, decision log entries)
+- Issue closures (existing issues superseded or addressed by new artifact)
+- New artifacts needed (brainstorm revealed work that needs its own define cycle)
 
 ### create-agent
 
-Dispatched by define or the impact analysis loop to create new artifacts. Loads the relevant template from `${CLAUDE_PLUGIN_ROOT}/templates/` and the execution reference from `${CLAUDE_PLUGIN_ROOT}/skills/create/reference/`. Follows the execution reference exactly. Same operational logic as `/sdlc:create` — different entry point, same playbook.
+Dispatched by define or the impact analysis loop to create new artifacts.
+
+**Input:** Draft file path, artifact level.
+
+**Behavior:** Loads the template from `${CLAUDE_PLUGIN_ROOT}/templates/<level>-template.md` and the execution reference from `${CLAUDE_PLUGIN_ROOT}/skills/create/reference/<level>-execution.md`. Follows the execution reference exactly. Does NOT ask for user confirmation (the user already confirmed during impact analysis). Does NOT offer to delete the draft (define manages draft lifecycle). Does NOT run cascade logic (that's the impact analysis loop's job).
+
+**Output:** Created artifact identifier (issue number + URL for GitHub issues, file path for git artifacts).
+
+**Difference from `/sdlc:create` skill:** The skill has user-facing gates (confirmation, draft cleanup offer, cascade reporting). The agent skips these because define orchestrates those interactions.
 
 ### update-agent
 
-Dispatched by define or the impact analysis loop to update existing artifacts. Receives the specific change to make. Loads the execution reference from create's reference directory. Makes the surgical edit. Same operational logic as `/sdlc:update` — different entry point, same playbook.
+Dispatched by define or the impact analysis loop to update existing artifacts.
 
-### draft-reviewer (existing)
+**Input:** Target (issue number or file path), specific change to make (structured: which section, old value, new value).
 
-Validates drafts before user review. Checks completeness, upstream consistency, internal consistency, dependency validity, scope, and YAGNI. Max 3 iterations before escalating to human. Unchanged from current design.
+**Behavior:** Loads the execution reference from `${CLAUDE_PLUGIN_ROOT}/skills/update/reference/<level>-execution.md`. Makes the surgical edit. Does NOT ask for user confirmation (already confirmed). Does NOT show side-by-side comparison (define handled that in the impact discussion). Does NOT escalate to define (it's already in define).
+
+**Output:** Confirmation of change made.
+
+**Difference from `/sdlc:update` skill:** The skill has escalation logic (3+ changes → redirect to define) and user confirmation. The agent receives pre-approved, scoped changes from define.
+
+### draft-reviewer (existing, updated path)
+
+Validates drafts before user review. Checks completeness, upstream consistency, internal consistency, dependency validity, scope, and YAGNI. Max 3 iterations before escalating to human.
+
+**Updated:** Must read draft templates from `${CLAUDE_PLUGIN_ROOT}/templates/<level>-template.md` (previously read from define's reference guides). The required fields for validation come from the template, not the brainstorming guide.
+
+### update skill reference directory
+
+The update skill keeps its own `reference/` directory with its execution references (currently `epic-update.md`, `feature-update.md`, etc.). These are distinct from create's execution references — create handles new artifact creation, update handles surgical edits to existing artifacts. The update-agent loads from `skills/update/reference/`, not from create's references.
 
 ### Dispatch Strategy
 
 Sequential-with-parallelism (like superpowers subagent-driven-development):
 - Analysis agent runs first (needs full context)
 - For each confirmed impact, dispatch the appropriate agent
-- Independent updates can run in parallel (updating two unrelated epics)
+- Independent updates can run in parallel using Claude Code's Agent tool (multiple agent dispatches in a single message)
 - Dependent updates run sequentially (create epic first, then update PI with its number)
+
+**Parallelism note:** Claude Code's Agent tool supports dispatching multiple agents in a single message for parallel execution. The define skill should use this when two confirmed impacts are independent (e.g., updating two unrelated epics). When impacts have dependencies (e.g., creating a new issue and then referencing its number in a PI update), they must be sequential.
 
 ## Label Taxonomy Updates
 
@@ -326,6 +481,11 @@ Sequential-with-parallelism (like superpowers subagent-driven-development):
 - `size:small` — feature is directly implementable, no child stories
 - `size:large` — feature is decomposed into stories
 
+**Validation rules:**
+- `size:*` labels apply ONLY to `type:feature` issues. The reconcile skill should strip `size:*` labels from non-feature issues.
+- Create and update should validate that size labels are only set on features.
+- A `size:large` feature must have at least one child story. A `size:small` feature must have zero child stories.
+
 ## What Gets Removed
 
 - Depth system (LIGHT/STANDARD/DEEP) — all scope assessment matrices, question count prescriptions, approach count rules
@@ -336,12 +496,13 @@ Sequential-with-parallelism (like superpowers subagent-driven-development):
 - Current monolithic reference files (replaced by brainstorming guides + shared templates)
 - Feature template requiring stories list (stories section becomes optional)
 - Heavy PI template with full feature lists (replaced by lighter scope-seeds format)
+- Flat epics (stories directly under an epic, no features) — the new model requires Epic > Feature > optional Story. What was previously a "flat epic with stories" becomes an epic with `size:small` features (each directly implementable). This simplifies the hierarchy to one consistent pattern.
 
 ## What Gets Kept
 
-- Two-phase principle (creative → execution) — strengthened, not weakened
-- Draft-reviewer agent
-- Execution references under create/update
+- Two-phase principle (creative → execution) — amended per Design Principle #6: primary artifact follows two-phase, side-effects dispatch during impact analysis
+- Draft-reviewer agent (updated to read templates from new location)
+- Execution references under create/update (updated: create references must handle `size:small` features without `## Stories` section; update references unchanged)
 - All operational skills as user-invocable slash commands
 - Drafts directory workflow (`.claude/sdlc/drafts/`)
 - Conventional commit format
@@ -377,6 +538,34 @@ User invokes `/sdlc:define` with: "I want to rethink how the define skill works 
 - Impact 2: "Issue #7 is addressed by this epic. Close it?" → User: "Yes" → Dispatch update-agent → closes #7
 - Impact 3: "PRD acceptance criteria may need updating. Flag for future reshape?" → User: "Not now" → No dispatch
 - "All impacts resolved. Draft saved. Run `/sdlc:create epic` when ready."
+
+## End-to-End Example: Feature Under Existing Epic
+
+User invokes `/sdlc:define` with: "I need to add error handling to the create skill"
+
+**Brainstorming:** Skill loads context — sees Epic #12 (SDLC Plugin Restructure) exists with relevant features. Opens naturally: "What kind of errors are you running into?" User explains: validation failures when drafts are malformed, gh CLI errors, missing prerequisites. Skill tracks internally: this is scoped work under an existing epic, probably a feature. "This sounds like a feature under Epic #12 — concrete work with clear boundaries. Does that feel right?" User agrees. Skill explores: is this directly implementable or does it break down? User describes three distinct areas (validation errors, CLI errors, prerequisite checks). Skill: "That's three distinct areas — I'd call this `size:large` with three stories. Agree?"
+
+**Draft:** Feature template with `size:large`, three stories listed. User reviews and approves.
+
+**Impact analysis:**
+- Analysis agent: "1 impact found"
+- Impact 1: "Epic #12 needs this feature added to its Features checklist." → User: "Yes" → Dispatch update-agent → updates Epic #12
+
+## End-to-End Example: Reclassification During Brainstorm
+
+User invokes `/sdlc:define` with: "I want to add a size label to features"
+
+**Brainstorming:** Skill loads context. Opens: "Tell me more about what the size label would do." User explains small vs large features. Skill initially thinks this is a story — a single label addition. But as the conversation goes deeper, user describes: label taxonomy changes, reconcile skill updates, create/update validation changes, template changes. Skill: "We started talking about a small change, but this touches labels, reconcile, create, update, and templates — that's multiple features across different areas. This is really an epic. Want to reframe?" User agrees. Brainstorm continues at epic level, discovering features.
+
+## Migration Steps
+
+When this spec is implemented, the following existing artifacts need updating:
+
+1. **PRD Decision Log** — The entry for "Depth-based discovery (LIGHT/STANDARD/DEEP)" should be superseded with a new entry: "Creative brainstorming with lightweight checklists — replaced depth system to enable creative freedom while maintaining structured output."
+2. **PRD Acceptance Criteria** — Update to reflect new artifact definitions (flexible hierarchy, optional stories).
+3. **PRD Label Taxonomy** — Add `size:small` and `size:large` with validation rules.
+4. **CLAUDE.md** — Update the "Two-phase workflow" convention to reflect the amended principle (Design Principle #6). Update artifact hierarchy description.
+5. **Existing PI** (if one exists) — Migrate to the lighter scope-seeds format.
 
 ## Relationship to Previous Spec
 
