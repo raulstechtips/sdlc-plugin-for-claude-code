@@ -10,7 +10,7 @@
 ### Body Sections
 - `## Overview` — non-empty
 - `## Success Criteria` — at least one checkbox item
-- `## Features` or `## Stories` — at least one checklist item with `(#TBD)` placeholder (features for grouped epics, stories for flat epics)
+- `## Features` — at least one checklist item with `(#TBD)` placeholder
 
 Additional sections (Non-goals, Dependencies) are expected but not blocking.
 
@@ -40,11 +40,9 @@ EPIC_NUM=$(echo "$EPIC_URL" | grep -o '[0-9]*$')
 
 **Note:** Do NOT add a `status:` label to epics. Status labels are for stories only.
 
-### 2. Create Stub Child Issues
+### 2. Create Stub Feature Issues
 
-For each item in the `## Features` checklist (or `## Stories` for flat epics), create a stub child issue.
-
-**Feature stubs** (grouped epic):
+For each item in the `## Features` checklist, create a stub feature issue:
 
 ```bash
 FEAT_URL=$(gh issue create \
@@ -53,7 +51,7 @@ FEAT_URL=$(gh issue create \
 ## Description
 <one-line description from the draft checklist>
 
-## Stories
+## Acceptance Criteria
 - (to be defined via /sdlc:define feature)
 
 ## Non-goals
@@ -69,45 +67,12 @@ EOF
 )" \
   --label "type:feature" \
   --label "priority:<inherited from epic>" \
+  --label "size:small" \
   --label "area:<inherited from epic>")
 FEAT_NUM=$(echo "$FEAT_URL" | grep -o '[0-9]*$')
 ```
 
-**Story stubs** (flat epic):
-
-```bash
-STORY_URL=$(gh issue create \
-  --title "<story name>" \
-  --body "$(cat <<'EOF'
-## Description
-<one-line description from the draft checklist>
-
-## Acceptance Criteria
-- (to be defined via /sdlc:define story)
-
-## File Scope
-(to be defined)
-
-## Technical Notes
-(to be defined)
-
-## Dependencies
-- Blocked by: none
-- Blocks: none
-
-## Parent
-- Epic: #<EPIC_NUM>
-- Feature: none (flat epic)
-EOF
-)" \
-  --label "type:story" \
-  --label "priority:<inherited from epic>" \
-  --label "area:<inherited from epic>" \
-  --label "status:todo")
-STORY_NUM=$(echo "$STORY_URL" | grep -o '[0-9]*$')
-```
-
-Collect all created child issue numbers as you go.
+Collect all created feature issue numbers as you go.
 
 ### 3. Update Epic Issue Body
 

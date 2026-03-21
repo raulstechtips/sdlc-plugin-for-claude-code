@@ -134,8 +134,6 @@ For each open issue with a `## Parent` section:
 - If the parent does NOT exist → broken hierarchy
 - If the parent's type label is inconsistent (e.g., story's parent is also a story instead of a feature) → broken hierarchy
 
-**Exception:** If a story's `## Parent` section contains `- Feature: none` or `- Feature: none (flat epic)`, this is valid — the story is a direct child of the epic with no feature grouping. Do NOT flag this as a broken hierarchy. Only check that the `- Epic: #N` reference is valid.
-
 Record findings:
 ```
 CRITICAL: #77 references parent #999 which does not exist
