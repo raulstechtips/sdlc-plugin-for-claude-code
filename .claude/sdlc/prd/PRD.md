@@ -1,6 +1,6 @@
 ---
 name: SDLC Plugin for Claude Code
-version: 1.0
+version: 1.1
 created: 2026-03-20
 ---
 
@@ -68,7 +68,7 @@ PRD (git: .claude/sdlc/prd/PRD.md)
 | Type | `type:epic`, `type:feature`, `type:story`, `type:spike`, `type:bug`, `type:chore` | Classify work item kind |
 | Status | `status:todo`, `status:in-progress`, `status:done`, `status:blocked` | Track workflow state |
 | Priority | `priority:critical`, `priority:high`, `priority:medium`, `priority:low` | Rank urgency |
-| Area | `area:<name>` (project-specific) | Group by architectural area |
+| Area | `area:skills`, `area:agents`, `area:templates`, `area:reference`, `area:manifest`, `area:artifacts`, `area:docs` | Group by architectural area |
 | Triage | `triage` | Unprocessed captures awaiting definition |
 | Size | `size:small`, `size:large` | Classify feature complexity — small features are directly implementable, large features decompose into stories |
 
@@ -186,3 +186,4 @@ sdlc:init (once) → sdlc:define → sdlc:create → sdlc:status / sdlc:reconcil
 | 2026-03-21 | Flexible artifact hierarchy (optional stories) | Features don't always need stories — small features are directly implementable, simplifying the workflow | Define, Create, Feature Template |
 | 2026-03-21 | Amended two-phase principle with impact analysis | Define dispatches operational agents for side-effect artifacts (PI updates, parent updates) during impact analysis; primary artifact still follows define → create | Define, Create, Update, Agents |
 | 2026-03-21 | Size labels for features (size:small, size:large) | Visible classification of feature complexity enables better planning, validation, and reconciliation | Labels, Init, Reconcile, Feature Execution |
+| 2026-03-21 | Concrete area labels replacing placeholder | Area labels map to architectural zones of the plugin: skills, agents, templates, reference guides, manifests, runtime artifacts, and docs — chosen because work naturally clusters around these boundaries and each has a distinct change cadence | Labels, Init, Status, Reconcile |
