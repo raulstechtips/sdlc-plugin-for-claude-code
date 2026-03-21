@@ -7,10 +7,11 @@
 - `priority` — one of: `critical`, `high`, `medium`, `low`
 - `areas` — array of area labels
 - `parent-epic` — issue number of the parent epic
+- `size` — one of: `small`, `large`
 
 ### Body Sections
 - `## Description` — non-empty
-- `## Stories` — at least one checklist item with `(#TBD)` placeholder
+- `## Stories` — **only if `size: large`**: at least one checklist item with `(#TBD)` placeholder. **Must NOT exist if `size: small`.**
 
 Additional sections (Non-goals, Dependencies, Parent) are expected but not blocking.
 
@@ -30,6 +31,7 @@ FEAT_URL=$(gh issue create \
   --body-file /tmp/sdlc-feature-body.md \
   --label "type:feature" \
   --label "priority:<priority>" \
+  --label "size:<size>" \
   --label "area:<area1>" \
   --label "area:<area2>")
 FEAT_NUM=$(echo "$FEAT_URL" | grep -o '[0-9]*$')
@@ -37,7 +39,9 @@ FEAT_NUM=$(echo "$FEAT_URL" | grep -o '[0-9]*$')
 
 **Note:** Do NOT add a `status:` label to features. Status labels are for stories only.
 
-### 2. Create Stub Story Issues
+### 2. Create Stub Story Issues (size:large only)
+
+**Skip this step entirely if `size: small`.** Size:small features have no child stories.
 
 For each item in the `## Stories` checklist, create a stub story issue:
 
@@ -150,7 +154,7 @@ rm -f /tmp/sdlc-feature-body.md
 
 > **Created:**
 > - Feature: #`<FEAT_NUM>` — "`<name>`"
->   - Labels: `type:feature`, `priority:<priority>`, `area:<areas>`
+>   - Labels: `type:feature`, `priority:<priority>`, `size:<size>`, `area:<areas>`
 > - Story stub: #`<STORY1_NUM>` — "`<story1 name>`"
 > - Story stub: #`<STORY2_NUM>` — "`<story2 name>`"
 >

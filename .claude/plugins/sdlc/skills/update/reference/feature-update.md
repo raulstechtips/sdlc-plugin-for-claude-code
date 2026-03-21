@@ -58,6 +58,15 @@ gh issue edit <N> --add-label "area:search"
 gh issue edit <N> --remove-label "area:search"
 ```
 
+### Size Label Change
+
+```bash
+# Change from small to large (or vice versa)
+gh issue edit <N> --add-label "size:large" --remove-label "size:small"
+```
+
+**Note:** Changing size from `small` to `large` means the feature now needs stories. Changing from `large` to `small` means existing child stories should be reviewed. If this size change is combined with adding/removing stories, ESCALATE to define — that's a scope change requiring brainstorming.
+
 ### Title Changes
 
 ```bash

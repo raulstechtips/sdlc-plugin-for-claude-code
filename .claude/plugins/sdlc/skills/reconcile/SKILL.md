@@ -20,7 +20,7 @@ digraph reconcile {
     rankdir=TB;
     "Scan issues" [shape=box];
     "Build hierarchy + dep maps" [shape=box];
-    "Run 7 checks" [shape=box];
+    "Run 8 checks" [shape=box];
     "Present report" [shape=box];
     "User approves fixes?" [shape=diamond];
     "Apply label fixes in parallel" [shape=box];
@@ -28,7 +28,7 @@ digraph reconcile {
     "Flag unfixable items" [shape=box];
     "Done" [shape=box];
 
-    "Scan issues" -> "Build hierarchy + dep maps" -> "Run 7 checks" -> "Present report";
+    "Scan issues" -> "Build hierarchy + dep maps" -> "Run 8 checks" -> "Present report";
     "Present report" -> "User approves fixes?";
     "User approves fixes?" -> "Apply label fixes in parallel" [label="yes"];
     "User approves fixes?" -> "Done" [label="no"];
@@ -378,6 +378,22 @@ A blocker is **satisfied** (does not block) when:
 A blocker is **unmet** when:
 - Its GitHub state is `OPEN`, AND
 - Its labels do NOT contain `status:done`
+
+---
+
+## Check 8: Size Label Validation
+
+For every issue with `type:feature` label:
+
+1. **Exactly one size label** — must have either `size:small` or `size:large` (not both, not neither)
+2. **size:small consistency** — should have zero child stories (issues referencing this feature as parent)
+3. **size:large consistency** — should have at least one child story
+4. **Non-features with size labels** — any issue without `type:feature` that has `size:small` or `size:large` → strip the size label
+
+**Fix commands:**
+- Missing size label on feature: `gh issue edit <N> --add-label "size:small"` (default to small, flag for review)
+- Both size labels: `gh issue edit <N> --remove-label "size:small"` (keep large if it has children, keep small if not)
+- Size label on non-feature: `gh issue edit <N> --remove-label "size:small"` or `--remove-label "size:large"`
 
 ---
 
