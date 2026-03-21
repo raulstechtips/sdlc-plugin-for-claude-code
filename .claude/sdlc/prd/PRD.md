@@ -1,6 +1,6 @@
 ---
 name: SDLC Plugin for Claude Code
-version: 1.0
+version: 1.1
 created: 2026-03-20
 ---
 
@@ -46,7 +46,8 @@ PRD (git: .claude/sdlc/prd/PRD.md)
 **Key architectural decisions:**
 - Labels-only approach (no GitHub Projects) — Project field changes don't appear in the Timeline API, which would break retrospective metrics
 - Bidirectional dependency linking — every "Blocked by" in issue A is matched by a "Blocks" in issue B
-- Depth-based discovery — artifact complexity assessed via objective criteria (file count, area span, novelty) determines question depth (LIGHT/STANDARD/DEEP)
+- Creative brainstorming with lightweight checklists — define skill uses free-form conversation guided by internal checklists, replacing the rigid depth-based question system
+- Amended two-phase principle — define may dispatch operational agents for side-effect artifacts (PI updates, parent issue updates) confirmed by the user during impact analysis; primary artifact still follows define → create/update
 
 ## Data Models
 
@@ -55,9 +56,9 @@ PRD (git: .claude/sdlc/prd/PRD.md)
 | Artifact | Storage | Key Fields |
 |----------|---------|-----------|
 | PRD | `.claude/sdlc/prd/PRD.md` (git) | name, version, created, Overview, Tech Stack, Architecture, Data Models, API Contracts, Security Constraints, Roadmap, Acceptance Criteria, Out of Scope, Label Taxonomy, Decision Log |
-| PI | `.claude/sdlc/pi/PI.md` (git, archived to `completed/PI-N.md`) | name, theme, started, target, Goals, Epics (with feature lists), Dependency Graph, Worktree Strategy |
+| PI | `.claude/sdlc/pi/PI.md` (git, archived to `completed/PI-N.md`) | name, theme, started, target, Goals, Epics (with scope seeds), Dependencies, Worktree Strategy |
 | Epic | GitHub Issue (`type:epic`) | title, Overview, Success Criteria, Features checklist, Non-goals, Dependencies |
-| Feature | GitHub Issue (`type:feature`) | title, Description, Stories checklist, Non-goals, Dependencies, Parent Epic link |
+| Feature | GitHub Issue (`type:feature`) | title, Description, size (small/large), Acceptance Criteria, Stories checklist (if size:large), Non-goals, Dependencies, Parent Epic link |
 | Story | GitHub Issue (`type:story`) | title, Description, Acceptance Criteria, File Scope, Technical Notes, Dependencies, Parent Epic + Feature links |
 
 ### Label Taxonomy
@@ -67,8 +68,9 @@ PRD (git: .claude/sdlc/prd/PRD.md)
 | Type | `type:epic`, `type:feature`, `type:story`, `type:spike`, `type:bug`, `type:chore` | Classify work item kind |
 | Status | `status:todo`, `status:in-progress`, `status:done`, `status:blocked` | Track workflow state |
 | Priority | `priority:critical`, `priority:high`, `priority:medium`, `priority:low` | Rank urgency |
-| Area | `area:<name>` (project-specific) | Group by architectural area |
+| Area | `area:skills`, `area:agents`, `area:templates`, `area:reference`, `area:manifest`, `area:artifacts`, `area:docs` | Group by architectural area |
 | Triage | `triage` | Unprocessed captures awaiting definition |
+| Size | `size:small`, `size:large` | Classify feature complexity — small features are directly implementable, large features decompose into stories |
 
 ### Dependency Format (canonical)
 
@@ -143,12 +145,12 @@ sdlc:init (once) → sdlc:define → sdlc:create → sdlc:status / sdlc:reconcil
 2. **Missing update reference guides** — Add pi-update.md, epic-update.md, feature-update.md, story-update.md
 3. **`sdlc:audit`** — Technical verification skill that compares shipped code against PRD/PI/epic/feature/story specs using recursive subagent chains
 4. **PI Changelog** — Append-only invocation tracking for `sdlc:update` and `sdlc:define` changes, enabling richer retrospective metrics
-5. **Agents** — Autonomous agents for SDLC workflows (scope TBD)
+5. ~~Agents~~ — ✅ Three operational agents (impact-analysis, create-agent, update-agent) dispatched by define during impact analysis
 
 ## Acceptance Criteria
 
 - [ ] `sdlc:init` creates all labels from PRD taxonomy and all required directories without errors
-- [ ] `sdlc:define` completes all 5 phases (Context Loading, Scope Assessment, Discovery, Approaches, Draft) for each artifact level (PRD, PI, Epic, Feature, Story)
+- [ ] `sdlc:define` supports creative brainstorming with level-optional invocation, scope classification, and impact analysis with agent dispatch for each artifact level
 - [ ] `sdlc:create` successfully publishes drafts to GitHub Issues (Epic, Feature, Story) and git files (PRD, PI) with correct labels, parent links, and bidirectional dependencies
 - [ ] `sdlc:update` applies direct edits for small changes and escalates to define for large scope changes
 - [ ] `sdlc:status` produces accurate briefings showing in-progress, blocked, ready, and parallelizable work
@@ -156,6 +158,10 @@ sdlc:init (once) → sdlc:define → sdlc:create → sdlc:status / sdlc:reconcil
 - [ ] `sdlc:retro` generates retrospective documents with accurate metrics from Timeline API data
 - [ ] `sdlc:capture` creates triage issues from quick input
 - [ ] Full lifecycle can be run end-to-end: PRD → PI → Epics → Features → Stories → Status → Reconcile → Retro
+- [ ] `size:small` features can be created without a Stories section
+- [ ] `size:large` features require at least one story
+- [ ] Impact analysis correctly identifies cascading updates to PI, parent issues, and PRD
+- [ ] Operational agents (create-agent, update-agent) successfully execute dispatched work
 
 ## Out of Scope
 
@@ -175,4 +181,9 @@ sdlc:init (once) → sdlc:define → sdlc:create → sdlc:status / sdlc:reconcil
 | 2026-03-20 | Git-versioned PRD and PI (not GitHub Issues) | PRD and PI are stable documents that benefit from version control, diffing, and archival — unlike work items which need GitHub's collaboration features | Architecture, Create, Update |
 | 2026-03-20 | Bidirectional dependency linking | Enables reliable blocker detection and root-cause tracing in status/reconcile without needing to scan all issues | Data Models, Create, Update, Reconcile |
 | 2026-03-20 | Two-phase artifact workflow (define → create/update) | Separates creative brainstorming from execution, preventing half-formed artifacts from reaching GitHub | Architecture, Define, Create, Update |
-| 2026-03-20 | Depth-based discovery (LIGHT/STANDARD/DEEP) | Prevents over-engineering simple artifacts while ensuring complex ones get adequate exploration | Define |
+| 2026-03-20 | ~~Depth-based discovery (LIGHT/STANDARD/DEEP)~~ | ~~Prevents over-engineering simple artifacts~~ — **Superseded** by creative brainstorming (see below) | Define |
+| 2026-03-21 | Creative brainstorming replaces depth system | Depth-based discovery made brainstorming feel rigid and formulaic; creative freedom with lightweight checklists produces better artifacts | Define, Reference Guides |
+| 2026-03-21 | Flexible artifact hierarchy (optional stories) | Features don't always need stories — small features are directly implementable, simplifying the workflow | Define, Create, Feature Template |
+| 2026-03-21 | Amended two-phase principle with impact analysis | Define dispatches operational agents for side-effect artifacts (PI updates, parent updates) during impact analysis; primary artifact still follows define → create | Define, Create, Update, Agents |
+| 2026-03-21 | Size labels for features (size:small, size:large) | Visible classification of feature complexity enables better planning, validation, and reconciliation | Labels, Init, Reconcile, Feature Execution |
+| 2026-03-21 | Concrete area labels replacing placeholder | Area labels map to architectural zones of the plugin: skills, agents, templates, reference guides, manifests, runtime artifacts, and docs — chosen because work naturally clusters around these boundaries and each has a distinct change cadence | Labels, Init, Status, Reconcile |

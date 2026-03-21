@@ -7,7 +7,7 @@
 - `priority` — one of: `critical`, `high`, `medium`, `low`
 - `areas` — array of area labels
 - `parent-epic` — issue number of the parent epic
-- `parent-feature` — issue number of the parent feature (or `none` for flat epics)
+- `parent-feature` — issue number of the parent feature
 
 ### Body Sections
 - `## Description` — non-empty
@@ -79,15 +79,6 @@ FEAT_BODY=$(gh issue view <parent-feature> --json body --jq '.body')
 echo "$UPDATED_FEAT_BODY" | gh issue edit <parent-feature> --body-file -
 ```
 
-**For flat epics** (`parent-feature: none`): update the parent epic's `## Stories` checklist instead:
-
-```bash
-EPIC_BODY=$(gh issue view <parent-epic> --json body --jq '.body')
-
-# Find the line with this story's name and (#TBD), replace #TBD with #<STORY_NUM>
-
-echo "$UPDATED_EPIC_BODY" | gh issue edit <parent-epic> --body-file -
-```
 
 ### 4. Bidirectional Dependency Linking
 

@@ -89,6 +89,10 @@ gh label create "priority:high" --color "d93f0b" --force
 gh label create "priority:medium" --color "d93f0b" --force
 gh label create "priority:low" --color "d93f0b" --force
 
+# Size labels (yellow-green)
+gh label create "size:small" --color "e4e669" --force
+gh label create "size:large" --color "e4e669" --force
+
 # Triage (yellow)
 gh label create "triage" --color "fbca04" --force
 ```
@@ -158,7 +162,7 @@ Present a summary:
 ## SDLC Init Complete
 
 **Labels:**
-- Universal: 12 labels (type, status, priority, triage)
+- Universal: 14 labels (type, status, priority, size, triage)
 - Project areas: N labels from PRD Label Taxonomy
 - Total: N+12 labels ensured
 

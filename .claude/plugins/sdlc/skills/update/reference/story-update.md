@@ -161,10 +161,10 @@ Only change the status label if the current label doesn't match the calculated s
 
 After updating a story:
 
-- **If title changed**: update the parent feature's Stories checklist (or parent epic's Stories checklist for flat epics) to reflect the new title.
+- **If title changed**: update the parent feature's Stories checklist to reflect the new title.
 
 ```bash
-# Read parent feature body (or parent epic for flat epics)
+# Read parent feature body
 gh issue view <parent-feature> --json body --jq '.body' > /tmp/sdlc-parent-body.md
 ```
 

@@ -23,6 +23,7 @@ You receive:
 | Dependency Validity | Referenced issue numbers exist and are the correct type (verify via `gh issue view <number> --json title,labels,state`) |
 | Scope | Draft scope matches the level (not a story masquerading as an epic, features match parent epic) |
 | YAGNI | Unrequested sections, over-specification for the level |
+| Size Validation | For feature drafts: `size` field present in frontmatter (must be `small` or `large`). If `size:small`, no `## Stories` section exists. If `size:large`, `## Stories` section exists with at least one item. |
 
 ## What NOT to Check
 
@@ -38,7 +39,7 @@ Only flag issues that would cause real problems when `sdlc:create` or `sdlc:upda
 ## Process
 
 1. Read the draft file
-2. Read the reference guide for the level at `.claude/plugins/sdlc/skills/define/reference/<level>-guide.md` to understand required fields and draft template
+2. Read the template for the level at `${CLAUDE_PLUGIN_ROOT}/templates/<level>-template.md` to understand required fields and draft structure
 3. Read each upstream artifact specified in the dispatch context
 4. For any GitHub issue references (`#N`), verify they exist: `gh issue view <N> --json title,labels,state`
 5. Compare draft against upstream artifacts for consistency

@@ -6,8 +6,11 @@ Claude Code plugin (v2.0.0) providing structured SDLC management via GitHub Issu
 
 .claude/plugins/sdlc/          # Plugin source
   plugin.json                  # Manifest
-  skills/                      # 8 skills, each with SKILL.md + reference/ guides
+  templates/                   # Shared draft templates (rigid output formats)
+  skills/                      # 8 skills
     init/ capture/ define/ create/ update/ status/ reconcile/ retro/
+  agents/                      # 4 agents
+    draft-reviewer/ create-agent/ update-agent/ impact-analysis-agent/
 
 .claude/sdlc/                  # SDLC artifacts (runtime data)
   prd/PRD.md                   # Product requirements (git-versioned)
@@ -23,7 +26,7 @@ docs/                          # Research and design documents
 Skills are invoked as slash commands. The lifecycle:
 
 1. `/sdlc:init` — bootstrap labels and directories (once, after PRD exists)
-2. `/sdlc:define <level>` — brainstorm and produce a local draft
+2. `/sdlc:define [level]` — brainstorm and produce a local draft (level is optional — skill classifies if not specified)
 3. `/sdlc:create <level>` — validate draft, publish to GitHub/git
 4. `/sdlc:update <level> #N` — surgical edits to existing artifacts
 5. `/sdlc:status` — read-only project briefing
@@ -31,11 +34,12 @@ Skills are invoked as slash commands. The lifecycle:
 7. `/sdlc:retro` — process metrics and retrospective
 8. `/sdlc:capture` — quick-capture idea as triage issue
 
-Two-phase workflow: define (brainstorm) -> create/update (execute). Never mix creative and execution phases.
+Two-phase workflow: define (brainstorm) -> create/update (execute). Define may dispatch agents for side-effect updates confirmed by the user during impact analysis.
 
 ## Conventions
 
-- Artifact hierarchy: PRD > PI > Epic > Feature > Story
+- Artifact hierarchy: PRD > PI > Epic > Feature > optional Story
+- Features are classified as size:small (directly implementable) or size:large (decomposed into stories)
 - PRD and PI are git files; Epic/Feature/Story are GitHub Issues
 - All metadata via GitHub Labels (not Projects) — Timeline API dependency
 - Dependencies are bidirectional: `- Blocked by: #N` matched by `- Blocks: #N`
