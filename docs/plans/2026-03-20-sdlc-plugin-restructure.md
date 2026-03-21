@@ -34,10 +34,13 @@
 
 ### Files to Modify
 - `skills/create/reference/feature-execution.md` — Add `size` field support, make Stories optional
+- `skills/create/reference/epic-execution.md` — Remove flat epic (story stubs) path, epics always have features
+- `skills/create/reference/story-execution.md` — Remove flat epic `parent-feature: none` path
 - `skills/update/reference/feature-update.md` — Add size label change examples
+- `skills/update/reference/story-update.md` — Remove flat epic references
+- `skills/reconcile/SKILL.md` — Remove flat epic exception, add size label validation check
 - `agents/draft-reviewer/AGENT.md` — Update template lookup path, add size validation
 - `skills/init/SKILL.md` — Add `size:small` and `size:large` label creation
-- `skills/reconcile/SKILL.md` — Add size label validation check
 - `plugin.json` — Bump version
 
 ### Files to Modify (Project Artifacts)
@@ -478,27 +481,160 @@ Read .claude/plugins/sdlc/skills/define/SKILL.md
 
 - [ ] **Step 2: Write the new define SKILL.md**
 
-The new skill must include:
-- Frontmatter: `argument-hint: "[level] [identifier]"` (level is optional now)
-- Announcement message
-- Hard gate (no draft without completing all phases, no skipping)
-- Anti-rationalization table (updated — remove depth references, add impact analysis references)
-- 9-step process flow:
-  1. Load context — Read PRD, PI, existing artifacts. Parse optional level from `$ARGUMENTS`. If level provided, load brainstorming guide. Pre-flight checks per level.
-  2. Creative brainstorming — Load brainstorming guide from `${CLAUDE_PLUGIN_ROOT}/skills/define/reference/<level>-brainstorm.md`. If no level yet, start general conversation. Ask follow-ups naturally, check off internal checklist items as conversation covers them. One question at a time, wait for answers.
-  3. Scope classification — If level not specified, recommend with reasoning. Can happen naturally mid-brainstorm. Reclassification allowed without restarting.
-  4. Propose approaches — 2-3 ways to structure/decompose the work. Trade-offs and recommendation. Reclassification can happen here too.
-  5. Draft — Load template from `${CLAUDE_PLUGIN_ROOT}/templates/<level>-template.md`. Pour brainstorm content into rigid format. Write to `.claude/sdlc/drafts/<level>-<name>.md`. Reshapes include `## Changes` section.
-  6. Draft review loop — Dispatch `draft-reviewer` agent with draft path, level, upstream paths. Fix issues, re-dispatch (max 3). Surface to user if still failing.
-  7. User reviews draft — Present full draft. "Want to change anything?" Loop until explicit approval.
-  8. Impact analysis — Dispatch `impact-analysis-agent` with brainstorm context. Present impacts one by one. Each is a mini-conversation. Dispatch `create-agent` or `update-agent` as each is confirmed.
-  9. Announce next step — "Draft saved. Run `/sdlc:create <level>` when ready, or I can dispatch the create agent now." (Primary artifact only — side-effects handled in Step 8.)
-- Reshape flow section (detection heuristics, Changes section requirement)
-- Pre-flight checks table
-- Draft file naming convention
-- Dependency format (unchanged)
-- Integration table (updated to include agent dispatch path)
-- Internal signals for "I have enough to draft"
+Write the following content to `skills/define/SKILL.md`:
+
+```markdown
+---
+name: define
+description: Use when defining new SDLC artifacts (PRD, PI, epic, feature, story) or reshaping existing ones through collaborative brainstorming that produces a reviewable local draft.
+allowed-tools: Read, Edit, Write, Bash, Grep, Glob, Agent
+argument-hint: "[level] [identifier]"
+---
+
+I'm using the sdlc:define skill to define/reshape an SDLC artifact.
+
+<HARD-GATE>
+Do NOT produce a draft without completing all phases in order. Do NOT skip a phase because the artifact "seems simple." Do NOT present multiple phases at once — complete each one before moving to the next.
+</HARD-GATE>
+
+## Red Flags
+
+| Thought | Reality |
+|---------|---------|
+| "This is simple, skip to the draft" | All phases are mandatory. Simple artifacts have shorter brainstorms, not skipped phases. |
+| "I already know what to build" | Discovery catches assumptions. Even if you're right, the user confirms. |
+| "Let me skip the approaches phase" | Even simple work benefits from a quick "here's how I'd approach this — agree?" |
+| "The draft is obvious, no review needed" | The draft reviewer catches issues you miss after a long conversation. Always run it. |
+| "I'll skip impact analysis, nothing changed" | New artifacts always affect something. Even a small story might update a parent feature's checklist. |
+| "The user didn't specify a level, I'll guess" | Ask. Propose with reasoning. Don't assume. |
+| "I'll combine brainstorming and drafting" | Creative exploration and structured output are separate phases. Finish brainstorming before drafting. |
+| "This impact is obvious, no need to discuss" | Every impact is presented to the user. Even obvious ones get confirmed. |
+
+## Process Flow
+
+You MUST create a task for each of these phases and complete them in order:
+
+### Phase 1: Load Context
+
+Parse `$ARGUMENTS` for an optional level and optional identifier.
+
+- If level provided: load brainstorming guide from `${CLAUDE_PLUGIN_ROOT}/skills/define/reference/<level>-brainstorm.md`
+- If no level: proceed without a guide — the brainstorm will discover the level
+- Read `.claude/sdlc/prd/PRD.md` for project context
+- Read `.claude/sdlc/pi/PI.md` if it exists
+- Check pre-flight requirements (see Pre-Flight Checks below)
+- Detect new vs reshape: issue number in args = reshape; "reshape/rethink/revise/update" keywords = reshape; existing draft in drafts dir = ask user
+
+### Phase 2: Creative Brainstorming
+
+Open-ended conversation guided by the brainstorming guide's internal checklist. The guide lists what you need to understand before drafting — NOT a script of questions to ask.
+
+**How to brainstorm:**
+- Meet the user where they are. Start with what they told you.
+- Ask follow-up questions based on what's emerging from the conversation
+- One question at a time. Wait for the answer before asking the next.
+- Check off checklist items internally as the conversation covers them
+- Some items may get answered without being asked directly
+- If a research agent would help (brownfield PRD, unclear story scope), dispatch one per the brainstorming guide's instructions
+
+**Internal signals for "I have enough to draft":**
+- Can articulate back what the artifact is and why it exists
+- Knows where it fits in the hierarchy (which epic, which PI)
+- Understands the rough scope (what's in, what's out)
+- Has enough to fill the template without inventing details
+
+### Phase 3: Scope Classification
+
+If the user didn't specify a level, recommend one with reasoning:
+
+> "Based on what we've discussed, this sounds like a feature under Epic #12 — it's a concrete chunk of work, not a whole new goal. Does that feel right?"
+
+This can happen naturally during brainstorming — it doesn't have to be a formal gate. If mid-brainstorm the scope grows or shrinks, reclassify without restarting:
+
+> "We started talking about a feature, but this is really its own epic — there are at least three distinct chunks of work here. Want to reframe this as an epic?"
+
+Once the level is known, load the brainstorming guide if not already loaded.
+
+### Phase 4: Propose Approaches
+
+Present 2-3 ways to structure or decompose the work. Include trade-offs and your recommendation. Reclassification can also happen here if the approaches reveal the scope is different than expected.
+
+Wait for the user's choice before proceeding.
+
+### Phase 5: Draft
+
+Load the template from `${CLAUDE_PLUGIN_ROOT}/templates/<level>-template.md`. Pour everything from the brainstorm into the rigid format. Structured, consistent output every time.
+
+Write to `.claude/sdlc/drafts/<level>-<name>.md` (new) or `.claude/sdlc/drafts/<level>-<issue-number>.md` (reshape). Ensure the drafts directory exists.
+
+For reshapes, include a `## Changes` section at the end:
+
+| Section | Change | Old Value | New Value |
+|---------|--------|-----------|-----------|
+
+### Phase 6: Draft Review Loop
+
+Dispatch the `draft-reviewer` agent with:
+- Draft file path
+- Artifact level
+- Upstream artifact paths (PRD path, PI path, parent issue numbers as applicable)
+
+Fix any issues the agent finds. Re-dispatch (max 3 iterations). If still failing after 3, surface remaining issues to the user.
+
+### Phase 7: User Reviews Draft
+
+Present the full draft. Do not summarize — show everything. Ask: "Want to change anything?" Loop until explicit approval. Do NOT interpret silence or ambiguity as approval.
+
+### Phase 8: Impact Analysis
+
+The confirm-then-dispatch loop:
+
+1. Dispatch `impact-analysis-agent` with: summary of brainstorm decisions, reclassifications, draft file path, current PI path, relevant issue numbers
+2. Agent returns structured list of impacts
+3. Present impacts to the user ONE AT A TIME
+4. Each impact is a mini-conversation — creative, back-and-forth, may involve follow-up questions
+5. As each impact is confirmed, dispatch the appropriate operational agent (`create-agent` or `update-agent`)
+6. Independent updates can run in parallel (multiple Agent dispatches in one message); dependent updates run sequentially (create issue first, then reference its number)
+
+### Phase 9: Announce Next Step
+
+For new artifacts:
+> "Draft saved to `<path>`. Run `/sdlc:create <level>` when ready to push it live, or I can dispatch the create agent now."
+
+For reshapes:
+> "Draft saved with changes documented. Run `/sdlc:update <level> <number>` to apply the changes, or I can dispatch the update agent now."
+
+This refers to the **primary artifact** only. Side-effect artifacts were already dispatched in Phase 8.
+
+## Pre-Flight Checks
+
+| Level | Prerequisites |
+|-------|--------------|
+| PRD | Check if `.claude/sdlc/prd/PRD.md` exists (greenfield vs brownfield vs reshape) |
+| PI | PRD exists. Check for previous retros. Check for active PI. |
+| Epic | PRD exists. PI exists. |
+| Feature | PRD exists. PI exists. Parent epic resolvable via `gh issue view`. |
+| Story | PRD exists. Parent feature and parent epic resolvable via `gh issue view`. |
+
+If prerequisites are missing, tell the user what needs to exist first and suggest the appropriate `/sdlc:define` invocation.
+
+## Dependency Format
+
+All dependency references in drafts use this exact format:
+
+- Blocked by: #N, #M
+- Blocks: #N, #M
+
+Rules: dash-prefixed, `#` prefix on issue numbers, comma-space separated, `none` when empty. Bidirectional — reconcile enforces consistency.
+
+## Integration
+
+| Scenario | Flow |
+|----------|------|
+| New artifact | define produces draft → `/sdlc:create` or create-agent pushes to GitHub/git |
+| Reshape existing | define produces draft with Changes section → `/sdlc:update` or update-agent applies edits |
+| Side-effect updates | Impact analysis dispatches create-agent/update-agent for confirmed cascading changes |
+```
 
 - [ ] **Step 3: Verify the new file loads correctly**
 
@@ -552,7 +688,7 @@ Must include:
 - [ ] **Step 3: Write create-agent AGENT.md**
 
 Must include:
-- Frontmatter: `name: create-agent`, `description: Creates SDLC artifacts from drafts — dispatched by define or impact analysis, not user-invoked`, `tools: Read, Bash, Grep, Glob`
+- Frontmatter: `name: create-agent`, `description: Creates SDLC artifacts from drafts — dispatched by define or impact analysis, not user-invoked`, `tools: Read, Edit, Write, Bash, Grep, Glob`
 - Input contract: draft file path, artifact level
 - Behavior: load template from `${CLAUDE_PLUGIN_ROOT}/templates/<level>-template.md`, load execution reference from `${CLAUDE_PLUGIN_ROOT}/skills/create/reference/<level>-execution.md`, follow exactly
 - What it skips (vs the skill): no user confirmation, no draft cleanup offer, no cascade logic
@@ -561,7 +697,7 @@ Must include:
 - [ ] **Step 4: Write update-agent AGENT.md**
 
 Must include:
-- Frontmatter: `name: update-agent`, `description: Updates existing SDLC artifacts — dispatched by define or impact analysis, not user-invoked`, `tools: Read, Bash, Grep, Glob`
+- Frontmatter: `name: update-agent`, `description: Updates existing SDLC artifacts — dispatched by define or impact analysis, not user-invoked`, `tools: Read, Edit, Write, Bash, Grep, Glob`
 - Input contract: target (issue number or file path), specific change (section, old value, new value)
 - Behavior: load execution reference from `${CLAUDE_PLUGIN_ROOT}/skills/update/reference/<level>-execution.md`, make surgical edit
 - What it skips (vs the skill): no user confirmation, no side-by-side comparison, no escalation to define
@@ -782,7 +918,11 @@ Add size label validation check for features.
 Read .claude/plugins/sdlc/skills/reconcile/SKILL.md
 ```
 
-- [ ] **Step 2: Add size label validation check**
+- [ ] **Step 2: Update process flow diagram**
+
+Change `"Run 7 checks" [shape=box]` to `"Run 8 checks" [shape=box]` in the dot diagram.
+
+- [ ] **Step 3: Add size label validation check**
 
 Add a new check to the reconcile checklist (after the existing checks):
 
@@ -802,7 +942,7 @@ For every issue with `type:feature` label:
 - Size label on non-feature: `gh issue edit <N> --remove-label "size:small"` or `--remove-label "size:large"`
 ```
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
 git add .claude/plugins/sdlc/skills/reconcile/SKILL.md
@@ -958,7 +1098,116 @@ level-optional define invocation, and amended two-phase principle."
 
 ---
 
-### Task 12: Bump Plugin Version
+### Task 12: Remove Flat Epic References
+
+The new model requires Epic > Feature > optional Story. Flat epics (stories directly under an epic, no features) are removed. Several execution references and reconcile have flat epic code paths that must be cleaned up.
+
+**Files:**
+- Modify: `skills/create/reference/epic-execution.md`
+- Modify: `skills/create/reference/story-execution.md`
+- Modify: `skills/update/reference/story-update.md`
+- Modify: `skills/reconcile/SKILL.md`
+
+- [ ] **Step 1: Update epic-execution.md — Required Fields**
+
+Change the body sections requirement:
+```
+- `## Features` — at least one checklist item with `(#TBD)` placeholder
+```
+Remove the `or ## Stories` alternative and flat epic references.
+
+- [ ] **Step 2: Update epic-execution.md — Remove story stubs path**
+
+In Step 2 (Create Stub Child Issues), remove the entire "Story stubs (flat epic)" code block and the conditional branching. Only the "Feature stubs" path remains. Update the section header from "Create Stub Child Issues" to "Create Stub Feature Issues".
+
+Remove the `- Feature: none (flat epic)` pattern from the story stub body.
+
+- [ ] **Step 3: Update story-execution.md — Required Fields**
+
+Change `parent-feature` from:
+```
+- `parent-feature` — issue number of the parent feature (or `none` for flat epics)
+```
+To:
+```
+- `parent-feature` — issue number of the parent feature
+```
+
+- [ ] **Step 4: Update story-execution.md — Remove flat epic path in Step 3**
+
+In Step 3 (Update Parent Feature's Stories Checklist), remove the "For flat epics" alternate code path. Stories always have a parent feature now.
+
+- [ ] **Step 5: Update story-update.md — Remove flat epic references**
+
+Read `skills/update/reference/story-update.md` and remove any references to "flat epics", `parent-feature: none`, or `Feature: none (flat epic)` patterns.
+
+- [ ] **Step 6: Update reconcile SKILL.md — Remove flat epic exception**
+
+In the C2 Broken Hierarchy check, remove the exception:
+```
+If a story's ## Parent section contains `- Feature: none` or `- Feature: none (flat epic)`, this is valid
+```
+Stories must always have a valid parent feature now.
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add .claude/plugins/sdlc/skills/create/reference/epic-execution.md \
+       .claude/plugins/sdlc/skills/create/reference/story-execution.md \
+       .claude/plugins/sdlc/skills/update/reference/story-update.md \
+       .claude/plugins/sdlc/skills/reconcile/SKILL.md
+git commit -m "feat(sdlc): remove flat epic support from execution references
+
+Flat epics (stories directly under an epic) are replaced by the
+flexible hierarchy: Epic > Feature (size:small or size:large) >
+optional Story. All execution references and reconcile updated."
+```
+
+---
+
+### Task 13: Migrate Existing PI (if exists)
+
+Check if an active PI exists and migrate it to the lighter scope-seeds format.
+
+**Files:**
+- Modify: `.claude/sdlc/pi/PI.md` (if it exists)
+
+- [ ] **Step 1: Check if PI exists**
+
+```bash
+test -f .claude/sdlc/pi/PI.md && echo "PI exists" || echo "No active PI"
+```
+
+If no active PI exists, skip this task entirely.
+
+- [ ] **Step 2: Read current PI**
+
+```
+Read .claude/sdlc/pi/PI.md
+```
+
+- [ ] **Step 3: Migrate to scope-seeds format**
+
+Rewrite the PI to use the new template format from `templates/pi-template.md`:
+- Replace detailed feature lists under epics with scope seeds (bullet points)
+- Remove `#TBD` placeholders for features (scope seeds don't have issue numbers)
+- Keep existing epic issue numbers if they exist
+- Simplify the Dependencies section to cross-epic only
+- Update frontmatter if needed
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add .claude/sdlc/pi/PI.md
+git commit -m "docs(pi): migrate to scope-seeds format
+
+Replace detailed feature lists with lightweight scope seeds.
+Epics are now goals with bullet-point direction, not feature commitments."
+```
+
+---
+
+### Task 14: Bump Plugin Version and Align Versions
 
 **Files:**
 - Modify: `plugin.json`
@@ -988,14 +1237,16 @@ Task 6 (Feature Execution) ← depends on Task 1        │
 Task 7 (Feature Update) ← independent                 │
 Task 8 (Init) ← independent                           │
 Task 9 (Reconcile) ← independent                      │
+Task 12 (Flat Epic Removal) ← independent             │
                                                       │
-Task 10 (PRD) ← depends on Tasks 1-9 being designed   │
-Task 11 (CLAUDE.md) ← depends on Tasks 1-9            │
-Task 12 (Version Bump) ← last                         │
+Task 10 (PRD) ← depends on Tasks 1-12 being designed  │
+Task 11 (CLAUDE.md) ← depends on Tasks 1-12           │
+Task 13 (PI Migration) ← depends on Task 1 (templates)│
+Task 14 (Version Bump) ← last                         │
 ```
 
 **Parallelizable groups:**
 - Tasks 1 + 2 can run in parallel (no dependencies)
-- Tasks 5 + 6 + 7 + 8 + 9 can run in parallel (independent modifications)
-- Tasks 10 + 11 can run in parallel (independent files)
-- Task 12 runs last
+- Tasks 5 + 6 + 7 + 8 + 9 + 12 can run in parallel (independent modifications)
+- Tasks 10 + 11 + 13 can run in parallel (independent files)
+- Task 14 runs last
