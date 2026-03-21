@@ -13,19 +13,23 @@ Ensure all 8 core SDLC skills work correctly end-to-end through a full lifecycle
 ## Epics
 
 ### Epic: Bug Fixes & Stabilization (#1)
-- Feature: Define Skill Overhaul (#2) — Rework sdlc:define to mirror superpowers brainstorming: task tracking, phase-by-phase presentation, structured draft review
-- Feature: Other Planning Skills Stabilization (#3) — Validate and fix sdlc:init, sdlc:capture
-- Feature: Execution Skills Stabilization (#4) — Validate and fix sdlc:create, sdlc:update
-- Feature: Monitoring Skills Stabilization (#5) — Validate and fix sdlc:status, sdlc:reconcile, sdlc:retro
+**Goal:** All 8 core skills work correctly through a full end-to-end lifecycle
+**Priority:** critical
+**Scope seeds:**
+- Rework sdlc:define to mirror superpowers brainstorming with creative freedom
+- Validate and fix sdlc:init, sdlc:capture
+- Validate and fix sdlc:create, sdlc:update
+- Validate and fix sdlc:status, sdlc:reconcile, sdlc:retro
 
-### Epic: Complete Update Reference Guides (#TBD)
-- Feature: Write Missing Update Guides (#TBD) — create pi-update.md, epic-update.md, feature-update.md, story-update.md
+### Epic: Complete Update Reference Guides
+**Goal:** sdlc:update has complete execution references for all 5 artifact levels
+**Priority:** high
+**Scope seeds:**
+- Write missing update guides (pi-update.md, epic-update.md, feature-update.md, story-update.md)
 
-## Dependency Graph
+## Dependencies
 
-- Epic "Bug Fixes & Stabilization" and Epic "Complete Update Reference Guides" have no cross-dependencies and can run in parallel
-- Within Bug Fixes, Planning Skills should be validated first since Execution and Monitoring skills depend on artifacts produced by planning skills
-- The update guides epic has no internal ordering constraints — the 4 guides can be written in any order
+- Bug Fixes & Stabilization and Complete Update Reference Guides have no cross-dependencies and can run in parallel
 
 ## Worktree Strategy
 
