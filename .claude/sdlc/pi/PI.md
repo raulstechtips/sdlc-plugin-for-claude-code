@@ -8,24 +8,25 @@ status: active
 
 ## Goals
 
-Ensure all 8 core SDLC skills work correctly end-to-end through a full lifecycle (define PRD → plan PI → decompose into epics/features/stories → track status → reconcile → retro). Fill in the 4 missing update reference guides so that `sdlc:update` has complete coverage across all artifact levels.
+Ensure all core SDLC skills work correctly end-to-end through a full lifecycle (define PRD → plan PI → decompose into epics/features/stories → track status → reconcile → retro). Stabilize the execution flow by absorbing artifact creation/modification into the define skill, expanding capture to support unplanned work items, and completing the reference guide suite for the update agent.
 
 ## Epics
 
 ### Epic: Bug Fixes & Stabilization (#1)
-**Goal:** All 8 core skills work correctly through a full end-to-end lifecycle
+**Goal:** All core skills work correctly through a full end-to-end lifecycle
 **Priority:** critical
 **Scope seeds:**
 - Rework sdlc:define to mirror superpowers brainstorming with creative freedom
-- Validate and fix sdlc:init, sdlc:capture
-- Validate and fix sdlc:create, sdlc:update
+- Absorb execution into define, remove standalone create/update skills
+- Expand sdlc:capture to support bug, chore, and triage types
+- Validate and fix sdlc:init
 - Validate and fix sdlc:status, sdlc:reconcile, sdlc:retro
 
 ### Epic: Complete Update Reference Guides
-**Goal:** sdlc:update has complete execution references for all 5 artifact levels
+**Goal:** Update agent has complete execution references for all 5 artifact levels
 **Priority:** high
 **Scope seeds:**
-- Write missing update guides (pi-update.md, epic-update.md, feature-update.md, story-update.md)
+- Review and fix existing update guides (pi-update.md, epic-update.md, feature-update.md, story-update.md, prd-update.md)
 
 ## Dependencies
 
