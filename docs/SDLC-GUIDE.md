@@ -24,7 +24,7 @@ How to use the v2 SDLC plugin to plan, decompose, execute, and close sprints.
 sdlc:define pi  ──►  sdlc:define epic  ──►  sdlc:define feature  ──►  sdlc:define story
        │                                                                       │
        │                                                                       ▼
-  sdlc:retro pi  ◄──────────────────────────────────  sdlc:status  →  work  →  sdlc:reconcile
+  sdlc:finish-dev  ◄──  sdlc:reconcile  ◄──  sdlc:status  ◄──  work  ◄──  sdlc:setup-dev
 ```
 
 ### Phase 1: Plan the Sprint
@@ -40,7 +40,7 @@ This skill:
 - Builds a dependency graph and proposes a worktree strategy
 - Creates a GitHub Issue with the `type:pi` label (no local file needed)
 
-If a previous PI exists, run `sdlc:retro pi` for the retrospective first, then `sdlc:define pi` to create the new sprint issue.
+If a previous PI exists, close the previous PI issue and then run `sdlc:define pi` to create the new sprint issue.
 
 ### Phase 2: Decompose Into Work Items
 
@@ -111,21 +111,21 @@ sdlc:update prd "Use Redis for session persistence instead of Postgres"
 ```
 Records the decision in the PRD Decision Log. Decisions are baked into the PRD body when the PI closes.
 
-### Phase 5: Close the Sprint
+### Phase 5: Ship and Close
 
-**Step 1 — Run the retrospective:**
+**Step 1 — Merge roll-up branches:**
+
+When all child items under a large feature, epic, or PI are complete, use finish-dev to create a PR:
 ```
-sdlc:retro pi
+sdlc:finish-dev
 ```
-Produces an analysis document at `.claude/sdlc/retros/`. Does NOT modify issues, labels, or artifacts.
+This reads the current branch, verifies all children are closed, resolves the parent branch, and creates a PR with a child-issue summary and test plan.
 
 **Step 2 — Close the PI issue and start fresh:**
 ```
 gh issue close <pi-issue-number>
 ```
-Closes the current PI GitHub Issue. Bakes decisions into the PRD, wipes the decision log, and bumps the PRD version.
-
-Then run `sdlc:define pi` to create the next sprint issue.
+Closes the current PI GitHub Issue. Then run `sdlc:define pi` to create the next sprint issue.
 
 ---
 
@@ -140,7 +140,7 @@ Then run `sdlc:define pi` to create the next sprint issue.
 | `sdlc:update prd` | Record a decision or update a PRD section |
 | `sdlc:define pi` | Draft and create a new Program Increment as a GitHub Issue |
 | `sdlc:update pi` | Edit the PI GitHub Issue when scope changes mid-sprint |
-| `sdlc:retro pi` | Process retrospective with metrics |
+| `sdlc:finish-dev` | Create PR to merge roll-up branch into parent |
 | `sdlc:define epic` | Draft epic details |
 | `sdlc:create epic` | Create epic + stub feature issues on GitHub |
 | `sdlc:define feature` | Draft feature details |
@@ -190,7 +190,6 @@ Stories with unmet blockers get `status:blocked` automatically. `sdlc:status` an
 │   │   ├── PRD.md                 ← product requirements (git-versioned)
 │   │   └── completed/
 │   ├── drafts/                    ← local working drafts (gitignored)
-│   └── retros/                    ← retrospective notes
 └── plugins/
     └── sdlc/                      ← SDLC plugin (commands, skills, hooks)
 ```
@@ -284,7 +283,7 @@ sdlc:status              → start coding
 
 ### Starting a new sprint on an existing project
 ```
-sdlc:retro pi            → produces retrospective analysis
+sdlc:finish-dev          → creates PR for the PI roll-up branch
 gh issue close <pi-num>  → closes the current PI issue
 sdlc:define pi "Phase 2" → creates PI-2 as a new GitHub Issue
 sdlc:define epic "Session Persistence"
