@@ -46,17 +46,17 @@ Parse `$ARGUMENTS` to determine the retrospective scope:
 
 | Input | Scope |
 |-------|-------|
-| `pi` or _(empty)_ | Full PI — read `.claude/sdlc/pi/PI.md` for the planned scope |
+| `pi` or _(empty)_ | Full PI — read active PI issue via `gh issue list --label "type:pi" --state open` |
 | `epic #N` | Single epic and all its child features and stories |
 | `feature #N` | Single feature and all its child stories |
 
-**If `.claude/sdlc/pi/PI.md` does not exist** when running PI scope: announce "PI.md not found at `.claude/sdlc/pi/PI.md`. Proceeding with GitHub data only — planned counts will not be available." and continue.
+**If no active PI issue is found** when running PI scope: announce "No open PI issue found. Proceeding with GitHub data only — planned counts will not be available." and continue.
 
 **If `$ARGUMENTS` is non-empty but does not match a known pattern**, announce: "Unknown scope `$ARGUMENTS`. Valid options: `pi`, `epic #N`, `feature #N`. Defaulting to full PI scope." and proceed as PI scope.
 
 ### Determine date boundaries
 
-For PI scope, read the `start-date` and `end-date` fields from PI.md frontmatter. If PI.md is missing or those fields are absent, use the date of the oldest closed story as `SINCE` and today as `UNTIL`.
+For PI scope, read the `## Timeline` section from the active PI issue body. Extract `Started` and `Target` dates. If no active PI issue is found or those fields are absent, use the date of the oldest closed story as `SINCE` and today as `UNTIL`.
 
 For epic or feature scope, derive boundaries from the GitHub issue creation date and close date of the parent issue.
 
@@ -326,7 +326,7 @@ Determine the output filename:
 - Epic scope: `.claude/sdlc/retros/epic-<N>-<YYYY-MM-DD>.md`
 - Feature scope: `.claude/sdlc/retros/feature-<N>-<YYYY-MM-DD>.md`
 
-Where `<YYYY-MM-DD>` is today's date and `<pi-id>` comes from PI.md frontmatter (e.g., `PI-1`).
+Where `<YYYY-MM-DD>` is today's date and `<pi-id>` comes from the PI issue title (e.g., `PI-1`).
 
 Create the `.claude/sdlc/retros/` directory if it does not exist:
 
