@@ -11,11 +11,13 @@ Internal checklist for the define skill. Weave these into natural conversation �
 - What's NOT in scope for this feature?
 - Any dependencies on other features or stories?
 - Which parent epic does this belong to?
+- If small: what files will be created or modified?
+- What technical considerations, patterns, or approaches apply?
 
 ## Context to load
 
 - Read the parent epic: `gh issue view <parent-epic> --json title,body,labels`
-- Read `.claude/sdlc/pi/PI.md` — check if this feature was listed as a scope seed
+- Read active PI issue (`gh issue list --label "type:pi" --state open`) — check if this feature was listed as a scope seed
 - Read `.claude/sdlc/prd/PRD.md` — check relevant Architecture and Data Models sections
 
 ## Size classification
@@ -24,6 +26,13 @@ Internal checklist for the define skill. Weave these into natural conversation �
 - **size:large** — Needs decomposition into stories. Multiple sessions, multiple areas, or multiple people.
 
 The brainstorm should naturally discover which size fits. Don't force the classification — let it emerge from the conversation.
+
+## Technical considerations
+
+After size is determined, explore technical aspects with size-aware focus:
+
+- **size:small** — Implementation details: file scope, patterns to follow, edge cases, error handling
+- **size:large** — Architectural decisions: chosen approaches, trade-offs considered, patterns that child stories need to inherit
 
 ## Template reference
 

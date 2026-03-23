@@ -50,7 +50,7 @@ Use a descriptive message: `docs(prd): update Architecture section with new cach
 
 After updating the PRD, check for downstream impacts:
 
-- **If a decision affects the PI plan**: flag the PI for review. Example: "This decision changes the Architecture section. The current PI may need adjustments — want me to check `.claude/sdlc/pi/PI.md`?"
+- **If a decision affects the PI plan**: flag the PI for review. Example: "This decision changes the Architecture section. The current PI may need adjustments — want me to check the active PI issue?"
 - **If a decision affects open issues**: search for issues in the affected area. Example: if updating Security Constraints, check for open stories in `area:auth`.
 
 ```bash

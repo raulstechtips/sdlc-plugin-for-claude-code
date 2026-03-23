@@ -19,36 +19,57 @@
 
 ### Read current PI
 
-```
-Read .claude/sdlc/pi/PI.md
+```bash
+gh issue view <N> --json body,title,labels
 ```
 
 ### Make targeted edits
 
-Use the Edit tool to modify specific sections. Do NOT rewrite the entire file — change only the targeted content.
+Extract the `body` field, apply string manipulation to modify only the targeted content, then write it back. Do NOT rewrite the entire body — change only the targeted section.
 
 ### Common direct updates
 
 **Date change:**
-Edit the `started` or `target` field in the YAML frontmatter.
-
-**Theme tweak:**
-Edit the `theme` field in the YAML frontmatter.
-
-**Status update for an epic entry:**
-Find the epic line in the `## Epics` section and update its status annotation.
-
-**Single epic/feature rename:**
-Find the line referencing the old name and replace it with the new name. Ensure the issue number reference stays intact.
-
-### Commit
+Update the `started` or `target` field in the metadata section of the body, then:
 
 ```bash
-git add .claude/sdlc/pi/PI.md
-git commit -m "docs(pi): <description of change>"
+gh issue edit <N> --body "$UPDATED_BODY"
 ```
 
-Use a descriptive message: `docs(pi): extend target date to 2026-04-15` or `docs(pi): rename epic Auth Setup to Authentication`.
+**Theme tweak:**
+Update the `theme` field in the metadata section of the body, then:
+
+```bash
+gh issue edit <N> --body "$UPDATED_BODY"
+```
+
+**Status update for an epic entry:**
+Find the epic line in the `## Epics` section of the body, update its status annotation, then:
+
+```bash
+gh issue edit <N> --body "$UPDATED_BODY"
+```
+
+**Single epic/feature rename:**
+Find the line referencing the old name, replace it with the new name (keeping the issue number reference intact), then:
+
+```bash
+gh issue edit <N> --body "$UPDATED_BODY"
+```
+
+**Title change:**
+
+```bash
+gh issue edit <N> --title "<new title>"
+```
+
+**Label change:**
+
+```bash
+gh issue edit <N> --add-label "<label>" --remove-label "<label>"
+```
+
+Use a descriptive description of what changed: `gh issue edit <N> --body "$UPDATED_BODY"` extending the target date, or renaming an epic entry.
 
 ## Cascade Rules
 
@@ -60,7 +81,7 @@ After updating the PI, check for downstream impacts:
 gh issue view <epic-number> --json title --jq '.title'
 ```
 
-Flag if the title doesn't match the new name in PI.md.
+Flag if the title doesn't match the new name in the PI issue body.
 
 - **If dates changed**: flag stories with time-sensitive dependencies.
 - **If structure changed** (escalated via define, then applied): flag all affected epics and features for review.

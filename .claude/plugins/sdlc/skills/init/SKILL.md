@@ -57,7 +57,7 @@ STOP. Do not proceed further.
 
 ## Step 2: Read Label Taxonomy
 
-Parse the PRD for a `## Label Taxonomy` section. If found, extract the area label names from the table rows (each row has `| area:<name> | <description> |`).
+Parse the PRD for a `## Label Taxonomy` section. If found, scan the table and extract all values matching the `area:<name>` pattern from any cell. Labels may appear comma-separated within a single cell (e.g., `area:skills`, `area:agents`, `area:templates` in one row). Collect all unique area names into `AREA_LABELS`.
 
 If no Label Taxonomy section exists, announce:
 
@@ -72,22 +72,25 @@ Record: `AREA_LABELS` (list of area names, possibly empty).
 Create all labels using `--force` for idempotency (creates if missing, updates color if exists).
 
 ```bash
-# Type labels (blue)
-gh label create "type:epic" --color "0075ca" --force
+# Type labels (semantic colors per type)
+gh label create "type:pi" --color "5319e7" --force
+gh label create "type:epic" --color "7057ff" --force
 gh label create "type:feature" --color "0075ca" --force
-gh label create "type:story" --color "0075ca" --force
+gh label create "type:story" --color "e4e669" --force
+gh label create "type:bug" --color "d93f0b" --force
+gh label create "type:chore" --color "c5def5" --force
 
-# Status labels (green)
-gh label create "status:todo" --color "0e8a16" --force
-gh label create "status:in-progress" --color "0e8a16" --force
+# Status labels (semantic colors per state)
+gh label create "status:todo" --color "c5def5" --force
+gh label create "status:in-progress" --color "fbca04" --force
 gh label create "status:done" --color "0e8a16" --force
-gh label create "status:blocked" --color "0e8a16" --force
+gh label create "status:blocked" --color "d93f0b" --force
 
-# Priority labels (red)
-gh label create "priority:critical" --color "d93f0b" --force
+# Priority labels (severity gradient)
+gh label create "priority:critical" --color "b60205" --force
 gh label create "priority:high" --color "d93f0b" --force
-gh label create "priority:medium" --color "d93f0b" --force
-gh label create "priority:low" --color "d93f0b" --force
+gh label create "priority:medium" --color "fbca04" --force
+gh label create "priority:low" --color "c5def5" --force
 
 # Size labels (yellow-green)
 gh label create "size:small" --color "e4e669" --force
@@ -100,7 +103,7 @@ gh label create "triage" --color "fbca04" --force
 Then for each area label from the PRD:
 
 ```bash
-gh label create "area:<name>" --color "7057ff" --force
+gh label create "area:<name>" --color "c2e0c6" --force
 ```
 
 Track counts: how many labels were newly created vs already existed. The `--force` flag means existing labels are silently updated (color only), so count the total attempted.
@@ -111,7 +114,6 @@ Track counts: how many labels were newly created vs already existed. The `--forc
 
 ```bash
 mkdir -p .claude/sdlc/prd
-mkdir -p .claude/sdlc/pi/completed
 mkdir -p .claude/sdlc/drafts
 mkdir -p .claude/sdlc/retros
 ```
@@ -119,7 +121,7 @@ mkdir -p .claude/sdlc/retros
 Add `.gitkeep` files to any empty directories:
 
 ```bash
-for dir in .claude/sdlc/prd .claude/sdlc/pi .claude/sdlc/pi/completed .claude/sdlc/drafts .claude/sdlc/retros; do
+for dir in .claude/sdlc/prd .claude/sdlc/drafts .claude/sdlc/retros; do
   if [ -z "$(ls -A $dir 2>/dev/null)" ]; then
     touch "$dir/.gitkeep"
   fi
@@ -158,18 +160,18 @@ If any are missing, suggest: "Consider enabling [plugin] for [benefit]."
 
 Present a summary:
 
+Compute label counts from the labels actually created in Step 3: count the universal labels (type + status + priority + size + triage) and the area labels separately, then sum for the total.
+
 ```
 ## SDLC Init Complete
 
 **Labels:**
-- Universal: 14 labels (type, status, priority, size, triage)
-- Project areas: N labels from PRD Label Taxonomy
-- Total: N+12 labels ensured
+- Universal: <count> labels (type, status, priority, size, triage)
+- Project areas: <count> labels from PRD Label Taxonomy
+- Total: <sum> labels ensured
 
 **Directories:**
 - .claude/sdlc/prd/ ✓
-- .claude/sdlc/pi/ ✓
-- .claude/sdlc/pi/completed/ ✓
 - .claude/sdlc/drafts/ ✓
 - .claude/sdlc/retros/ ✓
 

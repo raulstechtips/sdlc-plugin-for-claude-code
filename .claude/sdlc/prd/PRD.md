@@ -8,29 +8,30 @@ created: 2026-03-20
 
 SDLC Plugin for Claude Code is a Claude Code plugin that provides structured software development lifecycle management through collaborative brainstorming, GitHub Issues, and git-versioned artifacts. It enables developers to plan, decompose, execute, track, and retrospect on work using a hierarchical work-item model (PRD > PI > Epic > Feature > Story) with process discipline enforced through mandatory phases and hard gates.
 
-The plugin splits source of truth strategically: the PRD owns product requirements (git-versioned), the PI Plan owns sprint structure (git-versioned), and GitHub Issues own detailed work items with acceptance criteria, dependencies, and status tracking. All process metrics are derived from GitHub's Timeline API via label change events, enabling data-driven retrospectives.
+The plugin splits source of truth strategically: the PRD owns product requirements (git-versioned), and GitHub Issues own all planning and work artifacts — PI Plans, Epics, Features, and Stories — with acceptance criteria, dependencies, and status tracking. All process metrics are derived from GitHub's Timeline API via label change events, enabling data-driven retrospectives.
 
 ## Tech Stack
 
 - **Runtime:** Claude Code plugin system (markdown-based skills with YAML frontmatter)
 - **External CLI tools:** `gh` (GitHub CLI), `git`, `jq`, `bash`
-- **Artifact storage:** Git-versioned markdown files (PRD, PI) + GitHub Issues (Epic, Feature, Story)
+- **Artifact storage:** Git-versioned markdown files (PRD) + GitHub Issues (PI, Epic, Feature, Story)
 - **Metadata tracking:** GitHub Labels (status, priority, type, area, triage)
 - **Process metrics:** GitHub Timeline API (label change events, PR events)
 - **Plugin manifest:** `plugin.json` (name, description, version)
 
 ## Architecture
 
-The plugin is a collection of 8 skills organized under `.claude/plugins/sdlc/`, each with a `SKILL.md` defining behavior and optional `reference/` guides containing level-specific templates and criteria.
+The plugin is a collection of 6 skills and 4 agents organized under `.claude/plugins/sdlc/`, each skill with a `SKILL.md` defining behavior and each agent with an `AGENT.md` and optional `reference/` guides containing level-specific execution instructions.
 
-**Two-phase artifact workflow:**
-1. **Define phase:** `sdlc:define <level>` brainstorms collaboratively with the user, producing a local draft file in `.claude/sdlc/drafts/`
-2. **Execute phase:** `sdlc:create <level>` or `sdlc:update <level>` validates the draft and publishes to GitHub Issues or git — no creative decisions at this stage
+**Define-driven artifact workflow:**
+1. **Brainstorm:** `sdlc:define` collaborates with the user, producing a local draft file in `.claude/sdlc/drafts/`
+2. **Execute:** Define dispatches the create-agent or update-agent to publish artifacts to GitHub Issues or git — no separate skill invocation needed
+3. **Impact analysis:** Define identifies cascading updates and dispatches agents for confirmed side-effects
 
 **Artifact hierarchy (top-down decomposition):**
 ```
 PRD (git: .claude/sdlc/prd/PRD.md)
-  └── PI Plan (git: .claude/sdlc/pi/PI.md)
+  └── PI Plan (GitHub Issue, type:pi label)
        └── Epic (GitHub Issue, type:epic)
             └── Feature (GitHub Issue, type:feature)
                  └── Story (GitHub Issue, type:story)
@@ -38,7 +39,7 @@ PRD (git: .claude/sdlc/prd/PRD.md)
 
 **Skill interaction patterns:**
 - `sdlc:init` bootstraps infrastructure (labels, directories) by reading the PRD
-- `sdlc:define` produces drafts consumed by `sdlc:create` (new) or `sdlc:update` (reshape)
+- `sdlc:define` brainstorms, produces drafts, and dispatches create-agent or update-agent for execution
 - `sdlc:status` is read-only — gathers state from GitHub Issues and PI Plan
 - `sdlc:reconcile` audits and fixes label drift across all open issues
 - `sdlc:retro` analyzes completed work using Timeline API metrics
@@ -47,7 +48,7 @@ PRD (git: .claude/sdlc/prd/PRD.md)
 - Labels-only approach (no GitHub Projects) — Project field changes don't appear in the Timeline API, which would break retrospective metrics
 - Bidirectional dependency linking — every "Blocked by" in issue A is matched by a "Blocks" in issue B
 - Creative brainstorming with lightweight checklists — define skill uses free-form conversation guided by internal checklists, replacing the rigid depth-based question system
-- Amended two-phase principle — define may dispatch operational agents for side-effect artifacts (PI updates, parent issue updates) confirmed by the user during impact analysis; primary artifact still follows define → create/update
+- Define owns the full lifecycle — brainstorm, draft, execute, impact analysis. Define dispatches create-agent and update-agent directly, eliminating the separate create/update skill handoff
 
 ## Data Models
 
@@ -56,7 +57,7 @@ PRD (git: .claude/sdlc/prd/PRD.md)
 | Artifact | Storage | Key Fields |
 |----------|---------|-----------|
 | PRD | `.claude/sdlc/prd/PRD.md` (git) | name, version, created, Overview, Tech Stack, Architecture, Data Models, API Contracts, Security Constraints, Roadmap, Acceptance Criteria, Out of Scope, Label Taxonomy, Decision Log |
-| PI | `.claude/sdlc/pi/PI.md` (git, archived to `completed/PI-N.md`) | name, theme, started, target, Goals, Epics (with scope seeds), Dependencies, Worktree Strategy |
+| PI | GitHub Issue (`type:pi`) | name, theme, Timeline (started, target), Goals, Epics (with scope seeds and #TBD placeholders), Dependencies, Worktree Strategy |
 | Epic | GitHub Issue (`type:epic`) | title, Overview, Success Criteria, Features checklist, Non-goals, Dependencies |
 | Feature | GitHub Issue (`type:feature`) | title, Description, size (small/large), Acceptance Criteria, Stories checklist (if size:large), Non-goals, Dependencies, Parent Epic link |
 | Story | GitHub Issue (`type:story`) | title, Description, Acceptance Criteria, File Scope, Technical Notes, Dependencies, Parent Epic + Feature links |
@@ -65,7 +66,7 @@ PRD (git: .claude/sdlc/prd/PRD.md)
 
 | Category | Labels | Purpose |
 |----------|--------|---------|
-| Type | `type:epic`, `type:feature`, `type:story`, `type:spike`, `type:bug`, `type:chore` | Classify work item kind |
+| Type | `type:pi`, `type:epic`, `type:feature`, `type:story`, `type:bug`, `type:chore` | Classify work item kind |
 | Status | `status:todo`, `status:in-progress`, `status:done`, `status:blocked` | Track workflow state |
 | Priority | `priority:critical`, `priority:high`, `priority:medium`, `priority:low` | Rank urgency |
 | Area | `area:skills`, `area:agents`, `area:templates`, `area:reference`, `area:manifest`, `area:artifacts`, `area:docs` | Group by architectural area |
@@ -97,6 +98,9 @@ The plugin interacts with external systems exclusively through CLI tools:
 | Operation | Command Pattern | Used By |
 |-----------|----------------|---------|
 | Create issue | `gh issue create --title "..." --body "..." --label "..."` | create |
+| Create PI issue | `gh issue create --label type:pi` | create (PI) |
+| Close PI issue | `gh issue close <number>` | create (PI archival) |
+| Edit PI issue | `gh issue edit <number> --body "..."` | update (PI) |
 | View issue | `gh issue view <number> --json title,body,labels,state` | define, update, status, reconcile |
 | Edit issue | `gh issue edit <number> --add-label/--remove-label/--body "..."` | update, reconcile |
 | List issues | `gh issue list --label "..." --state open --json number,title,labels` | status, reconcile, retro |
@@ -108,8 +112,7 @@ The plugin interacts with external systems exclusively through CLI tools:
 
 | Operation | Command Pattern | Used By |
 |-----------|----------------|---------|
-| Commit artifact | `git add <file> && git commit -m "..."` | create (PRD, PI) |
-| Tag PI completion | `git tag pi-N-complete` | create (PI archival) |
+| Commit artifact | `git add <file> && git commit -m "..."` | create (PRD) |
 | Read history | `git log --fixed-strings --grep="(#N)"` | retro |
 
 ## Security Constraints
@@ -124,39 +127,34 @@ The plugin interacts with external systems exclusively through CLI tools:
 | Skill | Purpose | Phase | Modifies State? |
 |-------|---------|-------|-----------------|
 | `sdlc:init` | Bootstrap labels, directories, validate setup | Setup | Yes (labels, directories) |
-| `sdlc:capture` | Quick-capture idea as triage issue | Capture | Yes (creates issue) |
-| `sdlc:define` | Collaborative brainstorming producing local draft | Planning | Yes (draft file only) |
-| `sdlc:create` | Validate draft, publish to GitHub/git | Execution | Yes (issues, git files) |
-| `sdlc:update` | Surgical edits to existing artifacts | Modification | Yes (issues, git files) |
+| `sdlc:capture` | Type-aware capture of bugs, chores, and triage items with dedicated templates | Capture | Yes (creates issue) |
+| `sdlc:define` | Collaborative brainstorming, draft production, and artifact execution via agent dispatch | Planning + Execution | Yes (draft file, issues, git files) |
 | `sdlc:status` | Read-only project briefing with next actions | Monitoring | No |
 | `sdlc:reconcile` | Audit and fix label drift | Maintenance | Yes (labels, open/closed state) |
 | `sdlc:retro` | Process metrics and retrospective analysis | Analysis | Yes (retro file, git commit) |
 
 **Skill interaction flow:**
 ```
-sdlc:init (once) → sdlc:define → sdlc:create → sdlc:status / sdlc:reconcile → sdlc:retro
-                    sdlc:define (reshape) → sdlc:update
-                    sdlc:capture → sdlc:define (later)
+sdlc:init (once) → sdlc:define (brainstorm + execute) → sdlc:status / sdlc:reconcile → sdlc:retro
+                    sdlc:capture (bug/chore/triage) → sdlc:define (later, for promotion)
 ```
 
 ## Roadmap
 
-1. **Bug fixes and stabilization** — Ensure all 8 core skills work correctly end-to-end through a full lifecycle (define PRD → plan PI → decompose → track → reconcile → retro)
+1. **Bug fixes and stabilization** — Ensure all 6 core skills work correctly end-to-end through a full lifecycle (define PRD → plan PI → decompose → track → reconcile → retro)
 2. **Missing update reference guides** — Add pi-update.md, epic-update.md, feature-update.md, story-update.md
 3. **`sdlc:audit`** — Technical verification skill that compares shipped code against PRD/PI/epic/feature/story specs using recursive subagent chains
 4. **PI Changelog** — Append-only invocation tracking for `sdlc:update` and `sdlc:define` changes, enabling richer retrospective metrics
-5. ~~Agents~~ — ✅ Three operational agents (impact-analysis, create-agent, update-agent) dispatched by define during impact analysis
+5. ~~Agents~~ — ✅ Four operational agents (impact-analysis, create-agent, update-agent, draft-reviewer) dispatched by define
 
 ## Acceptance Criteria
 
 - [ ] `sdlc:init` creates all labels from PRD taxonomy and all required directories without errors
-- [ ] `sdlc:define` supports creative brainstorming with level-optional invocation, scope classification, and impact analysis with agent dispatch for each artifact level
-- [ ] `sdlc:create` successfully publishes drafts to GitHub Issues (Epic, Feature, Story) and git files (PRD, PI) with correct labels, parent links, and bidirectional dependencies
-- [ ] `sdlc:update` applies direct edits for small changes and escalates to define for large scope changes
+- [ ] `sdlc:define` supports creative brainstorming, draft production, artifact execution via agent dispatch, and impact analysis for each artifact level
 - [ ] `sdlc:status` produces accurate briefings showing in-progress, blocked, ready, and parallelizable work
 - [ ] `sdlc:reconcile` detects and fixes stale labels, unclosed parents, and dependency mismatches
 - [ ] `sdlc:retro` generates retrospective documents with accurate metrics from Timeline API data
-- [ ] `sdlc:capture` creates triage issues from quick input
+- [ ] `sdlc:capture` creates typed issues (bug, chore, triage) with dedicated templates from quick input
 - [ ] Full lifecycle can be run end-to-end: PRD → PI → Epics → Features → Stories → Status → Reconcile → Retro
 - [ ] `size:small` features can be created without a Stories section
 - [ ] `size:large` features require at least one story
@@ -168,7 +166,6 @@ sdlc:init (once) → sdlc:define → sdlc:create → sdlc:status / sdlc:reconcil
 - **GitHub Projects integration** — Decided against; Project field changes don't appear in the Timeline API, breaking retrospective metrics
 - **`sdlc:audit`** — Future skill for technical verification against specs
 - **PI Changelog** — Future append-only invocation tracking mechanism
-- **Agents** — Future autonomous agents for SDLC workflows
 - **GUI/web interface** — Plugin operates entirely through Claude Code CLI
 - **Non-GitHub issue trackers** — No support for Linear, Jira, Azure DevOps, or other platforms
 - **Multi-repo support** — Plugin operates within a single repository context
@@ -178,12 +175,15 @@ sdlc:init (once) → sdlc:define → sdlc:create → sdlc:status / sdlc:reconcil
 | Date | Decision | Reason | Affects |
 |------|----------|--------|---------|
 | 2026-03-20 | Labels-only metadata (no GitHub Projects) | Project field changes don't appear in Timeline API, which would break retro metrics that depend on label change events | Architecture, Reconcile, Retro, Status |
-| 2026-03-20 | Git-versioned PRD and PI (not GitHub Issues) | PRD and PI are stable documents that benefit from version control, diffing, and archival — unlike work items which need GitHub's collaboration features | Architecture, Create, Update |
+| 2026-03-20 | ~~Git-versioned PRD and PI (not GitHub Issues)~~ | ~~PRD and PI are stable documents that benefit from version control, diffing, and archival — unlike work items which need GitHub's collaboration features~~ — **PI portion superseded** by PI-to-issue migration (see 2026-03-23) | Architecture, Create, Update |
 | 2026-03-20 | Bidirectional dependency linking | Enables reliable blocker detection and root-cause tracing in status/reconcile without needing to scan all issues | Data Models, Create, Update, Reconcile |
 | 2026-03-20 | Two-phase artifact workflow (define → create/update) | Separates creative brainstorming from execution, preventing half-formed artifacts from reaching GitHub | Architecture, Define, Create, Update |
 | 2026-03-20 | ~~Depth-based discovery (LIGHT/STANDARD/DEEP)~~ | ~~Prevents over-engineering simple artifacts~~ — **Superseded** by creative brainstorming (see below) | Define |
 | 2026-03-21 | Creative brainstorming replaces depth system | Depth-based discovery made brainstorming feel rigid and formulaic; creative freedom with lightweight checklists produces better artifacts | Define, Reference Guides |
 | 2026-03-21 | Flexible artifact hierarchy (optional stories) | Features don't always need stories — small features are directly implementable, simplifying the workflow | Define, Create, Feature Template |
-| 2026-03-21 | Amended two-phase principle with impact analysis | Define dispatches operational agents for side-effect artifacts (PI updates, parent updates) during impact analysis; primary artifact still follows define → create | Define, Create, Update, Agents |
+| 2026-03-21 | ~~Amended two-phase principle with impact analysis~~ | ~~Define dispatches operational agents for side-effect artifacts (PI updates, parent updates) during impact analysis; primary artifact still follows define → create~~ — **Superseded** by define-absorbs-execution (see below) | Define, Create, Update, Agents |
 | 2026-03-21 | Size labels for features (size:small, size:large) | Visible classification of feature complexity enables better planning, validation, and reconciliation | Labels, Init, Reconcile, Feature Execution |
 | 2026-03-21 | Concrete area labels replacing placeholder | Area labels map to architectural zones of the plugin: skills, agents, templates, reference guides, manifests, runtime artifacts, and docs — chosen because work naturally clusters around these boundaries and each has a distinct change cadence | Labels, Init, Status, Reconcile |
+| 2026-03-22 | Define absorbs execution — create/update skills removed | Simpler workflow with fewer handoffs; define dispatches agents directly so artifacts get real issue numbers before impact analysis, eliminating the separate create/update skill invocation | Architecture, Skill Inventory, plugin.json, PI Goals |
+| 2026-03-23 | PI migrated from git file to GitHub Issue | Unifies artifact model, closes branch hierarchy gap (main → PI → epic → feature → story), enables epic stub creation during PI define | Architecture, Create, Update, Init, Status, Retro |
+| 2026-03-23 | Remove type:spike from label taxonomy | Spike concept is unused — exploratory work is tracked via triage capture and promoted through define; a dedicated spike type adds complexity without value | Labels, Init, SDLC Guide |

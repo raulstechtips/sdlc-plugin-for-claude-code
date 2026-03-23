@@ -10,6 +10,7 @@ type: epic
 name: <epic name>
 priority: <critical|high|medium|low>
 areas: [<area labels>]
+parent-pi: <issue number>
 status: draft
 ---
 ```
@@ -21,3 +22,4 @@ status: draft
 - `## Features` — Checklist of features with `(#TBD)` placeholders for issue numbers
 - `## Non-goals` — Explicit exclusions
 - `## Dependencies` — Bidirectional format: `- Blocked by: #N` / `- Blocks: #N` (or `none`)
+- `## Parent` — `PI: #<N>` (links to parent PI issue)
