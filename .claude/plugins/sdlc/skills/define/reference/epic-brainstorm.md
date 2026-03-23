@@ -13,7 +13,7 @@ Internal checklist for the define skill. Weave these into natural conversation �
 
 ## Context to load
 
-- Read `.claude/sdlc/pi/PI.md` — find the epic's scope seeds if it was planned in the PI
+- Read active PI issue: `gh issue list --label "type:pi" --state open --json number,title,body --jq '.[0]'` (then `gh issue view <N>` for full body if needed) — find the epic's scope seeds if it was planned in the PI
 - Read `.claude/sdlc/prd/PRD.md` — check Roadmap and Architecture sections
 - Check existing epics: `gh issue list --label "type:epic" --state open --json number,title`
 

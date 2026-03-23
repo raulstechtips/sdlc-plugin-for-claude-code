@@ -1,0 +1,12 @@
+{
+  "name": "sdlc",
+  "description": "Structured SDLC management — plan, decompose, execute, and ship work items using GitHub Issues and git-versioned artifacts.",
+  "version": "0.3.0",
+  "author": {
+    "name": "Raul Chakraborty",
+    "url": "https://github.com/raulstechtips"
+  },
+  "repository": "https://github.com/raulstechtips/sdlc-plugin-for-claude-code",
+  "license": "MIT",
+  "keywords": ["sdlc", "project-management", "github-issues", "planning", "agile"]
+}

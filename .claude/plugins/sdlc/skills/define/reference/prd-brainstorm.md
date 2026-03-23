@@ -7,6 +7,7 @@ Internal checklist for the define skill. Weave these into natural conversation â
 - What is this project and why does it exist?
 - What's the tech stack?
 - What's the high-level architecture?
+- What are the architectural areas of the project? (Derive `area:*` labels from the Architecture section â€” e.g., if the architecture describes skills, agents, and templates as distinct zones, those become `area:skills`, `area:agents`, `area:templates`)
 - What are the key data models?
 - What are the API contracts or interfaces?
 - What are the security constraints?
