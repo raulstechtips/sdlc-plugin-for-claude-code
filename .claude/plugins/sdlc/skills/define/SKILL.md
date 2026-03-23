@@ -1,6 +1,6 @@
 ---
 name: define
-description: Use when defining new SDLC artifacts (PRD, PI, epic, feature, story) or reshaping existing ones through collaborative brainstorming that produces a reviewable local draft.
+description: Use when defining new SDLC artifacts (PRD, PI, epic, feature, story, bug, chore) or reshaping existing ones through collaborative brainstorming that produces a reviewable local draft.
 allowed-tools: Read, Edit, Write, Bash, Grep, Glob, Agent
 argument-hint: "[level] [identifier]"
 ---
@@ -23,6 +23,7 @@ Do NOT produce a draft without completing all phases in order. Do NOT skip a pha
 | "The user didn't specify a level, I'll guess" | Ask. Propose with reasoning. Don't assume. |
 | "I'll combine brainstorming and drafting" | Creative exploration and structured output are separate phases. Finish brainstorming before drafting. |
 | "This impact is obvious, no need to discuss" | Every impact is presented to the user. Even obvious ones get confirmed. |
+| "I'll skip execution, the user can run /sdlc:create" | Phase 8 handles execution. Define is end-to-end now. |
 
 ## Process Flow
 
@@ -33,11 +34,16 @@ You MUST create a task for each of these phases and complete them in order:
 Parse `$ARGUMENTS` for an optional level and optional identifier.
 
 - If level provided: load brainstorming guide from `${CLAUDE_PLUGIN_ROOT}/skills/define/reference/<level>-brainstorm.md`
+- **Exception — chore level:** load `${CLAUDE_PLUGIN_ROOT}/skills/define/reference/story-brainstorm.md` instead (no `chore-brainstorm.md` exists). Note: parent-related questions in the story guide are conditional for chores — standalone chores skip them.
 - If no level: proceed without a guide — the brainstorm will discover the level
 - Read `.claude/sdlc/prd/PRD.md` for project context
-- Read `.claude/sdlc/pi/PI.md` if it exists
+- Check for active PI issue: `gh issue list --label "type:pi" --state open --json number,title,body --jq '.[0]'`
 - Check pre-flight requirements (see Pre-Flight Checks below)
 - Detect new vs reshape: issue number in args = reshape; "reshape/rethink/revise/update" keywords = reshape; existing draft in drafts dir = ask user
+- If args contain only an issue number (#N) with no level keyword: check the issue's labels via `gh issue view <N> --json labels`:
+  - Has `type:bug` label → set level to `bug`, load `bug-brainstorm.md` (via the generic rule)
+  - Has `type:chore` label → set level to `chore`, load `story-brainstorm.md` (via the chore exception)
+  - Has `triage` label → ask the user what level this should become (may be feature, story, bug, or chore)
 
 ### Phase 2: Creative Brainstorming
 
@@ -99,7 +105,61 @@ Fix any issues the agent finds. Re-dispatch (max 3 iterations). If still failing
 
 Present the full draft. Do not summarize — show everything. Ask: "Want to change anything?" Loop until explicit approval. Do NOT interpret silence or ambiguity as approval.
 
-### Phase 8: Impact Analysis
+### Phase 8: Execution
+
+Dispatch agents to create or update the primary artifact immediately. The user approved the draft in Phase 7 — execute now, before impact analysis, so downstream phases have real issue numbers.
+
+**Decision tree:**
+
+~~~
+Is this a reshape? (draft has ## Changes section)
+├── YES: Is this a reclassification? (draft type ≠ existing issue type label)
+│   ├── YES (reclassification reshape):
+│   │   1. Dispatch update-agent: swap type label, remove stale labels (e.g., size:* if becoming epic), replace body with draft body
+│   │   2. If new level has children (epic/feature-large): dispatch create-agents in parallel for children
+│   │   3. If children created: dispatch update-agent to backfill parent body #TBD → real numbers
+│   └── NO (normal reshape):
+│       1. Dispatch update-agent with Changes table parameters
+├── NO (new artifact): What level?
+│   ├── PRD:
+│   │   1. Dispatch create-agent (handles git add + commit)
+│   ├── PI:
+│   │   1. Dispatch create-agent for PI → receive PI issue number
+│   │   2. Dispatch create-agents in parallel for each epic in ## Epics checklist (each gets parent-pi = new number)
+│   │   3. Collect all epic issue numbers
+│   │   4. Dispatch update-agent to backfill PI body: replace each #TBD with real epic number
+│   ├── Epic:
+│   │   1. Dispatch create-agent for epic → receive issue number
+│   │   2. Dispatch create-agents in parallel for each feature in ## Features checklist (each gets parent-epic = new number)
+│   │   3. Collect all feature issue numbers
+│   │   4. Dispatch update-agent to backfill epic body: replace each #TBD with real feature number
+│   ├── Feature (size:large):
+│   │   1. Dispatch create-agent for feature → receive issue number
+│   │   2. Dispatch create-agents in parallel for each story in ## Stories checklist (each gets parent-feature = new number, parent-epic from draft frontmatter)
+│   │   3. Collect all story issue numbers
+│   │   4. Dispatch update-agent to backfill feature body: replace each #TBD with real story number
+│   ├── Feature (size:small):
+│   │   1. Dispatch create-agent for feature (no children)
+│   └── Story:
+│       1. Dispatch create-agent for story (no children)
+~~~
+
+**Sequencing rule:** The primary artifact MUST be created first (sequential) because children need its issue number for their `## Parent` section. Children can then be created in parallel. The backfill step MUST wait for all children to complete.
+
+**What define passes to agents:**
+
+To create-agent:
+- Draft file path (or inline body for stubs)
+- Artifact level
+- For child stubs: the child name, one-line description from the parent's checklist, parent issue numbers, inherited priority and area labels
+
+To update-agent:
+- Target issue number
+- Level
+- Change description (from Changes table for reshapes, or "backfill #TBD with #N for child-name" for backfills)
+- For reclassification: old type, new type, labels to add, labels to remove, new body content
+
+### Phase 9: Impact Analysis
 
 The confirm-then-dispatch loop:
 
@@ -110,25 +170,28 @@ The confirm-then-dispatch loop:
 5. As each impact is confirmed, dispatch the appropriate operational agent (`create-agent` or `update-agent`)
 6. Independent updates can run in parallel (multiple Agent dispatches in one message); dependent updates run sequentially (create issue first, then reference its number)
 
-### Phase 9: Announce Next Step
+### Phase 10: Next Steps
 
-For new artifacts:
-> "Draft saved to `<path>`. Run `/sdlc:create <level>` when ready to push it live, or I can dispatch the create agent now."
+Informational guidance — no dispatching, no "want me to create?". Content is level-dependent:
 
-For reshapes:
-> "Draft saved with changes documented. Run `/sdlc:update <level> <number>` to apply the changes, or I can dispatch the update agent now."
-
-This refers to the **primary artifact** only. Side-effect artifacts were already dispatched in Phase 8.
+- **Epic** → "Features #X, #Y, #Z created as stubs. Run `/sdlc:define feature #X` to flesh one out."
+- **Feature (large)** → "Stories #A, #B created as stubs. Run `/sdlc:define story #A` to flesh one out."
+- **Feature (small)** → "Feature is directly implementable. Ready to develop."
+- **Story** → "Next unfinished story under this feature is #B, or all stories defined — ready to develop."
+- **PRD** → "Committed. Run `/sdlc:define epic` to start decomposing."
+- **PI** → "Created as GitHub Issue. Run `/sdlc:define epic` to start decomposing."
 
 ## Pre-Flight Checks
 
 | Level | Prerequisites |
 |-------|--------------|
 | PRD | Check if `.claude/sdlc/prd/PRD.md` exists (greenfield vs brownfield vs reshape) |
-| PI | PRD exists. Check for previous retros. Check for active PI. |
+| PI | PRD exists. Check for previous closed PIs via `gh issue list --label "type:pi" --state closed`. Check for active PI issue via `gh issue list --label "type:pi" --state open`. |
 | Epic | PRD exists. PI exists. |
 | Feature | PRD exists. PI exists. Parent epic resolvable via `gh issue view`. |
 | Story | PRD exists. Parent feature and parent epic resolvable via `gh issue view`. |
+| Bug | PRD exists. No parent requirements — bugs are peers to the hierarchy. |
+| Chore | PRD exists. If parented, parent epic/feature resolvable via `gh issue view`. |
 
 If prerequisites are missing, tell the user what needs to exist first and suggest the appropriate `/sdlc:define` invocation.
 
@@ -145,6 +208,6 @@ Rules: dash-prefixed, `#` prefix on issue numbers, comma-space separated, `none`
 
 | Scenario | Flow |
 |----------|------|
-| New artifact | define produces draft → `/sdlc:create` or create-agent pushes to GitHub/git |
-| Reshape existing | define produces draft with Changes section → `/sdlc:update` or update-agent applies edits |
-| Side-effect updates | Impact analysis dispatches create-agent/update-agent for confirmed cascading changes |
+| New artifact | define brainstorms → draft → Phase 8 dispatches create-agent (and create-agents for children if applicable) |
+| Reshape existing | define brainstorms → draft with Changes section → Phase 8 dispatches update-agent |
+| Side-effect updates | Phase 9 (Impact Analysis) dispatches create-agent/update-agent for confirmed cascading changes |

@@ -9,7 +9,7 @@ How to use the v2 SDLC plugin to plan, decompose, execute, and close sprints.
 | Concept | What it is | Where it lives |
 |---------|-----------|----------------|
 | **PRD** | Product Requirements Document — the stable "what and why" (architecture, data models, API contracts, security constraints, decisions) | `.claude/sdlc/prd/PRD.md` |
-| **PI Plan** | Program Increment Plan — the "what and when" for the current sprint (epics, features, dependency graph, worktree strategy) | `.claude/sdlc/pi/PI.md` |
+| **PI Plan** | Program Increment Plan — the "what and when" for the current sprint (epics, features, dependency graph, worktree strategy) | GitHub Issue with `type:pi` label |
 | **Epic** | A large initiative spanning multiple features | GitHub Issue with `type:epic` label |
 | **Feature** | A deliverable capability under an epic | GitHub Issue with `type:feature` label |
 | **Story** | The smallest implementable unit of work | GitHub Issue with `type:story` label |
@@ -24,7 +24,7 @@ How to use the v2 SDLC plugin to plan, decompose, execute, and close sprints.
 sdlc:define pi  ──►  sdlc:define epic  ──►  sdlc:define feature  ──►  sdlc:define story
        │                                                                       │
        │                                                                       ▼
-  sdlc:retro pi  ◄──────────────────────────────────  sdlc:status  →  work  →  sdlc:reconcile
+  sdlc:finish-dev  ◄──  sdlc:reconcile  ◄──  sdlc:status  ◄──  work  ◄──  sdlc:setup-dev
 ```
 
 ### Phase 1: Plan the Sprint
@@ -38,14 +38,9 @@ This skill:
 - Asks you which workstreams go into this sprint
 - Decomposes each workstream into epics with features (titles only)
 - Builds a dependency graph and proposes a worktree strategy
-- Writes a local draft at `.claude/sdlc/drafts/pi.md` with `#TBD` placeholders
+- Creates a GitHub Issue with the `type:pi` label (no local file needed)
 
-Then push to GitHub:
-```
-sdlc:create pi
-```
-
-If a previous PI exists, run `sdlc:retro pi` for the retrospective, then `sdlc:create pi` archives the old PI and creates the new one.
+If a previous PI exists, close the previous PI issue and then run `sdlc:define pi` to create the new sprint issue.
 
 ### Phase 2: Decompose Into Work Items
 
@@ -56,7 +51,7 @@ Work top-down: epic → feature → story. Each level creates stub issues for th
 sdlc:define epic "UI Overhaul"
 sdlc:create epic
 ```
-Creates a detailed GitHub Issue for the epic + stub feature issues (title + parent link only). Updates PI.md with real issue numbers.
+Creates a detailed GitHub Issue for the epic + stub feature issues (title + parent link only). Updates the PI issue with real issue numbers.
 
 **Step 2 — Detail each feature:**
 ```
@@ -72,15 +67,27 @@ sdlc:create story
 ```
 Takes a stub story issue and adds the full detail: acceptance criteria, file scope, technical notes, verified dependencies.
 
+> **Note:** Each artifact gets a linked Git branch automatically during creation, branching from its parent's branch (or `main` for epics). Child stubs do not receive branches — they get branched when individually defined.
+
 ### Phase 3: Execute
 
 ```
 sdlc:status api
 ```
 
-Presents an ordered list of unblocked stories by priority (optionally filtered by area). Checks all dependencies, traces root blockers, identifies parallelization opportunities. You decide which story to pick up — the `status:in-progress` label transition is your responsibility.
+Presents an ordered list of unblocked stories by priority (optionally filtered by area). Checks all dependencies, traces root blockers, identifies parallelization opportunities.
 
-After completing a story, the agent creates a PR. Then run `sdlc:status` again for the next one.
+**Starting work on a story:**
+```
+sdlc:status              → pick a story
+claude -w                → spin up a worktree
+sdlc:setup-dev #130      → aligns worktree to the story's branch, sets status:in-progress
+                          → code, test, commit
+                          → create PR, close story
+sdlc:status              → next story
+```
+
+The `setup-dev` skill checks out the story's linked branch (created automatically during creation), or creates and links one if it doesn't exist yet. It also transitions the story to `status:in-progress`.
 
 ### Phase 4: Monitor & Adjust
 
@@ -104,21 +111,21 @@ sdlc:update prd "Use Redis for session persistence instead of Postgres"
 ```
 Records the decision in the PRD Decision Log. Decisions are baked into the PRD body when the PI closes.
 
-### Phase 5: Close the Sprint
+### Phase 5: Ship and Close
 
-**Step 1 — Run the retrospective:**
-```
-sdlc:retro pi
-```
-Produces an analysis document at `.claude/sdlc/retros/`. Does NOT modify issues, labels, or artifacts.
+**Step 1 — Merge roll-up branches:**
 
-**Step 2 — Archive and start fresh:**
+When all child items under a large feature, epic, or PI are complete, use finish-dev to create a PR:
 ```
-sdlc:create pi
+sdlc:finish-dev
 ```
-When run with an existing PI, bakes decisions into PRD, wipes decision log, bumps PRD version, archives PI to `.claude/sdlc/pi/completed/PI-N.md`, creates git tag `pi-N-complete`.
+This reads the current branch, verifies all children are closed, resolves the parent branch, and creates a PR with a child-issue summary and test plan.
 
-Then run `sdlc:define pi` to start the next sprint.
+**Step 2 — Close the PI issue and start fresh:**
+```
+gh issue close <pi-issue-number>
+```
+Closes the current PI GitHub Issue. Then run `sdlc:define pi` to create the next sprint issue.
 
 ---
 
@@ -131,10 +138,9 @@ Then run `sdlc:define pi` to start the next sprint.
 | `sdlc:define prd` | Guided interview to draft a new PRD |
 | `sdlc:create prd` | Push PRD draft to git |
 | `sdlc:update prd` | Record a decision or update a PRD section |
-| `sdlc:define pi` | Draft a new Program Increment plan |
-| `sdlc:create pi` | Push PI draft to GitHub |
-| `sdlc:update pi` | Update PI Plan when scope changes mid-sprint |
-| `sdlc:retro pi` | Process retrospective with metrics |
+| `sdlc:define pi` | Draft and create a new Program Increment as a GitHub Issue |
+| `sdlc:update pi` | Edit the PI GitHub Issue when scope changes mid-sprint |
+| `sdlc:finish-dev` | Create PR to merge roll-up branch into parent |
 | `sdlc:define epic` | Draft epic details |
 | `sdlc:create epic` | Create epic + stub feature issues on GitHub |
 | `sdlc:define feature` | Draft feature details |
@@ -146,16 +152,18 @@ Then run `sdlc:define pi` to start the next sprint.
 | `sdlc:reconcile` | Audit hierarchy, fix labels, validate deps |
 | `sdlc:capture` | Quick-capture idea as triage issue |
 | `sdlc:init` | Bootstrap labels, directories, and project setup |
+| `sdlc:setup-dev` | Align a worktree to an issue's branch and start work |
 
 ### Label Taxonomy
 
 | Category | Labels |
 |----------|--------|
-| Type | `type:epic`, `type:feature`, `type:story`, `type:spike`, `type:bug`, `type:chore` |
+| Type | `type:pi`, `type:epic`, `type:feature`, `type:story`, `type:bug`, `type:chore` |
 | Status | `status:todo`, `status:in-progress`, `status:done`, `status:blocked` |
 | Priority | `priority:critical`, `priority:high`, `priority:medium`, `priority:low` |
 | Area | `area:auth`, `area:api`, `area:agent`, `area:ui`, `area:infra`, `area:search` |
 | Triage | `triage` |
+| Size | `size:small`, `size:large` |
 
 ### Dependency Rules
 
@@ -181,12 +189,7 @@ Stories with unmet blockers get `status:blocked` automatically. `sdlc:status` an
 │   ├── prd/
 │   │   ├── PRD.md                 ← product requirements (git-versioned)
 │   │   └── completed/
-│   ├── pi/
-│   │   ├── PI.md                  ← current sprint plan
-│   │   └── completed/
-│   │       └── PI-1.md            ← archived sprints
 │   ├── drafts/                    ← local working drafts (gitignored)
-│   └── retros/                    ← retrospective notes
 └── plugins/
     └── sdlc/                      ← SDLC plugin (commands, skills, hooks)
 ```
@@ -215,27 +218,31 @@ Before using SDLC skills on a new project, create the required GitHub labels:
 
 ```bash
 # Type labels
-gh label create "type:epic"    --color "#7057ff" --force
-gh label create "type:feature" --color "#0075ca" --force
-gh label create "type:story"   --color "#cfd3d7" --force
-gh label create "type:spike"   --color "#e4e669" --force
-gh label create "type:bug"     --color "#d73a4a" --force
-gh label create "type:chore"   --color "#fef2c0" --force
+gh label create "type:pi"      --color "5319e7" --force
+gh label create "type:epic"    --color "7057ff" --force
+gh label create "type:feature" --color "0075ca" --force
+gh label create "type:story"   --color "e4e669" --force
+gh label create "type:bug"     --color "d93f0b" --force
+gh label create "type:chore"   --color "c5def5" --force
 
 # Status labels
-gh label create "status:todo"        --color "#ededed" --force
-gh label create "status:in-progress" --color "#0075ca" --force
-gh label create "status:done"        --color "#0e8a16" --force
-gh label create "status:blocked"     --color "#e11d48" --force
+gh label create "status:todo"        --color "c5def5" --force
+gh label create "status:in-progress" --color "fbca04" --force
+gh label create "status:done"        --color "0e8a16" --force
+gh label create "status:blocked"     --color "d93f0b" --force
 
 # Priority labels
-gh label create "priority:critical" --color "#b60205" --force
-gh label create "priority:high"     --color "#d93f0b" --force
-gh label create "priority:medium"   --color "#fbca04" --force
-gh label create "priority:low"      --color "#0e8a16" --force
+gh label create "priority:critical" --color "b60205" --force
+gh label create "priority:high"     --color "d93f0b" --force
+gh label create "priority:medium"   --color "fbca04" --force
+gh label create "priority:low"      --color "c5def5" --force
+
+# Size labels
+gh label create "size:small" --color "e4e669" --force
+gh label create "size:large" --color "e4e669" --force
 
 # Triage label
-gh label create "triage" --color "#bfd4f2" --force
+gh label create "triage" --color "fbca04" --force
 ```
 
 Area labels are project-specific. Use `sdlc:init` to create them for your project.
@@ -264,8 +271,7 @@ The text after the skill name is passed as `$ARGUMENTS` and used by the skill to
 sdlc:define prd          → guided interview, creates PRD draft
 sdlc:create prd          → commits PRD.md to git
 sdlc:init               → creates GitHub labels from PRD
-sdlc:define pi "MVP"     → creates PI-1 draft from PRD Roadmap
-sdlc:create pi           → pushes PI-1 to GitHub
+sdlc:define pi "MVP"     → creates PI-1 as a GitHub Issue (type:pi)
 sdlc:define epic "Auth"  → drafts epic
 sdlc:create epic         → creates epic + stub features on GitHub
 sdlc:define feature #10  → details feature + stub stories
@@ -277,10 +283,9 @@ sdlc:status              → start coding
 
 ### Starting a new sprint on an existing project
 ```
-sdlc:retro pi            → produces retrospective analysis
-sdlc:create pi           → archives PI-1, then prompts for PI-2 scope
-sdlc:define pi "Phase 2" → drafts PI-2
-sdlc:create pi           → pushes PI-2 to GitHub
+sdlc:finish-dev          → creates PR for the PI roll-up branch
+gh issue close <pi-num>  → closes the current PI issue
+sdlc:define pi "Phase 2" → creates PI-2 as a new GitHub Issue
 sdlc:define epic "Session Persistence"
 sdlc:create epic
 sdlc:define feature #125
@@ -293,7 +298,7 @@ sdlc:status
 ### Mid-sprint scope change
 ```
 sdlc:update prd "Switch from Postgres to Redis for sessions"
-sdlc:update pi "add Redis checkpointer story to Session Persistence"
+sdlc:update pi #<pi-num> "add Redis checkpointer story to Session Persistence"
 sdlc:update feature #125    → add the new story
 sdlc:define story #135      → flesh out the new story
 sdlc:create story

@@ -15,12 +15,12 @@ You receive:
 
 ## Behavior
 
-1. Load the execution reference from `${CLAUDE_PLUGIN_ROOT}/skills/update/reference/<level>-execution.md`
+1. Load the update reference from `${CLAUDE_PLUGIN_ROOT}/agents/update-agent/reference/<level>-update.md`
 2. Read the current state of the target (via `gh issue view` for issues, `Read` for files)
 3. Apply the surgical edit following the execution reference
-4. For git files: commit with conventional format (`docs(prd):`, `docs(pi):`, etc.)
+4. For git files: commit with conventional format (`docs(prd):`, etc.)
 
-## What You Skip (vs `/sdlc:update` skill)
+## Behavioral Constraints
 
 You are dispatched by define after the user has already confirmed the specific change. Therefore:
 - Do NOT ask for user confirmation
