@@ -158,11 +158,12 @@ Then run `sdlc:define pi` to create the next sprint issue.
 
 | Category | Labels |
 |----------|--------|
-| Type | `type:pi`, `type:epic`, `type:feature`, `type:story`, `type:spike`, `type:bug`, `type:chore` |
+| Type | `type:pi`, `type:epic`, `type:feature`, `type:story`, `type:bug`, `type:chore` |
 | Status | `status:todo`, `status:in-progress`, `status:done`, `status:blocked` |
 | Priority | `priority:critical`, `priority:high`, `priority:medium`, `priority:low` |
 | Area | `area:auth`, `area:api`, `area:agent`, `area:ui`, `area:infra`, `area:search` |
 | Triage | `triage` |
+| Size | `size:small`, `size:large` |
 
 ### Dependency Rules
 
@@ -218,28 +219,31 @@ Before using SDLC skills on a new project, create the required GitHub labels:
 
 ```bash
 # Type labels
-gh label create "type:pi"      --color "#5319e7" --force
-gh label create "type:epic"    --color "#7057ff" --force
-gh label create "type:feature" --color "#0075ca" --force
-gh label create "type:story"   --color "#cfd3d7" --force
-gh label create "type:spike"   --color "#e4e669" --force
-gh label create "type:bug"     --color "#d73a4a" --force
-gh label create "type:chore"   --color "#fef2c0" --force
+gh label create "type:pi"      --color "5319e7" --force
+gh label create "type:epic"    --color "7057ff" --force
+gh label create "type:feature" --color "0075ca" --force
+gh label create "type:story"   --color "e4e669" --force
+gh label create "type:bug"     --color "d93f0b" --force
+gh label create "type:chore"   --color "c5def5" --force
 
 # Status labels
-gh label create "status:todo"        --color "#ededed" --force
-gh label create "status:in-progress" --color "#0075ca" --force
-gh label create "status:done"        --color "#0e8a16" --force
-gh label create "status:blocked"     --color "#e11d48" --force
+gh label create "status:todo"        --color "c5def5" --force
+gh label create "status:in-progress" --color "fbca04" --force
+gh label create "status:done"        --color "0e8a16" --force
+gh label create "status:blocked"     --color "d93f0b" --force
 
 # Priority labels
-gh label create "priority:critical" --color "#b60205" --force
-gh label create "priority:high"     --color "#d93f0b" --force
-gh label create "priority:medium"   --color "#fbca04" --force
-gh label create "priority:low"      --color "#0e8a16" --force
+gh label create "priority:critical" --color "b60205" --force
+gh label create "priority:high"     --color "d93f0b" --force
+gh label create "priority:medium"   --color "fbca04" --force
+gh label create "priority:low"      --color "c5def5" --force
+
+# Size labels
+gh label create "size:small" --color "e4e669" --force
+gh label create "size:large" --color "e4e669" --force
 
 # Triage label
-gh label create "triage" --color "#bfd4f2" --force
+gh label create "triage" --color "fbca04" --force
 ```
 
 Area labels are project-specific. Use `sdlc:init` to create them for your project.

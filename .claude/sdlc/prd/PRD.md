@@ -66,7 +66,7 @@ PRD (git: .claude/sdlc/prd/PRD.md)
 
 | Category | Labels | Purpose |
 |----------|--------|---------|
-| Type | `type:pi`, `type:epic`, `type:feature`, `type:story`, `type:spike`, `type:bug`, `type:chore` | Classify work item kind |
+| Type | `type:pi`, `type:epic`, `type:feature`, `type:story`, `type:bug`, `type:chore` | Classify work item kind |
 | Status | `status:todo`, `status:in-progress`, `status:done`, `status:blocked` | Track workflow state |
 | Priority | `priority:critical`, `priority:high`, `priority:medium`, `priority:low` | Rank urgency |
 | Area | `area:skills`, `area:agents`, `area:templates`, `area:reference`, `area:manifest`, `area:artifacts`, `area:docs` | Group by architectural area |
@@ -186,3 +186,4 @@ sdlc:init (once) → sdlc:define (brainstorm + execute) → sdlc:status / sdlc:r
 | 2026-03-21 | Concrete area labels replacing placeholder | Area labels map to architectural zones of the plugin: skills, agents, templates, reference guides, manifests, runtime artifacts, and docs — chosen because work naturally clusters around these boundaries and each has a distinct change cadence | Labels, Init, Status, Reconcile |
 | 2026-03-22 | Define absorbs execution — create/update skills removed | Simpler workflow with fewer handoffs; define dispatches agents directly so artifacts get real issue numbers before impact analysis, eliminating the separate create/update skill invocation | Architecture, Skill Inventory, plugin.json, PI Goals |
 | 2026-03-23 | PI migrated from git file to GitHub Issue | Unifies artifact model, closes branch hierarchy gap (main → PI → epic → feature → story), enables epic stub creation during PI define | Architecture, Create, Update, Init, Status, Retro |
+| 2026-03-23 | Remove type:spike from label taxonomy | Spike concept is unused — exploratory work is tracked via triage capture and promoted through define; a dedicated spike type adds complexity without value | Labels, Init, SDLC Guide |
