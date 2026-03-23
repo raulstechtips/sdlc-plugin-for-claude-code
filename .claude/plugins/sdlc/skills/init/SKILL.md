@@ -72,23 +72,25 @@ Record: `AREA_LABELS` (list of area names, possibly empty).
 Create all labels using `--force` for idempotency (creates if missing, updates color if exists).
 
 ```bash
-# Type labels (blue)
-gh label create "type:pi" --color "0075ca" --force
-gh label create "type:epic" --color "0075ca" --force
+# Type labels (semantic colors per type)
+gh label create "type:pi" --color "5319e7" --force
+gh label create "type:epic" --color "7057ff" --force
 gh label create "type:feature" --color "0075ca" --force
-gh label create "type:story" --color "0075ca" --force
+gh label create "type:story" --color "e4e669" --force
+gh label create "type:bug" --color "d93f0b" --force
+gh label create "type:chore" --color "c5def5" --force
 
-# Status labels (green)
-gh label create "status:todo" --color "0e8a16" --force
-gh label create "status:in-progress" --color "0e8a16" --force
+# Status labels (semantic colors per state)
+gh label create "status:todo" --color "c5def5" --force
+gh label create "status:in-progress" --color "fbca04" --force
 gh label create "status:done" --color "0e8a16" --force
-gh label create "status:blocked" --color "0e8a16" --force
+gh label create "status:blocked" --color "d93f0b" --force
 
-# Priority labels (red)
-gh label create "priority:critical" --color "d93f0b" --force
+# Priority labels (severity gradient)
+gh label create "priority:critical" --color "b60205" --force
 gh label create "priority:high" --color "d93f0b" --force
-gh label create "priority:medium" --color "d93f0b" --force
-gh label create "priority:low" --color "d93f0b" --force
+gh label create "priority:medium" --color "fbca04" --force
+gh label create "priority:low" --color "c5def5" --force
 
 # Size labels (yellow-green)
 gh label create "size:small" --color "e4e669" --force
