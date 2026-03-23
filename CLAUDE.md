@@ -14,8 +14,6 @@ Claude Code plugin (v2.0.0) providing structured SDLC management via GitHub Issu
 
 .claude/sdlc/                  # SDLC artifacts (runtime data)
   prd/PRD.md                   # Product requirements (git-versioned)
-  pi/PI.md                     # Current PI plan (git-versioned)
-  pi/completed/                # Archived PI plans
   drafts/                      # Local working drafts (NOT committed)
   retros/                      # Retrospective documents
 
@@ -39,11 +37,11 @@ Define handles the full lifecycle: brainstorm → draft → execute → impact a
 
 - Artifact hierarchy: PRD > PI > Epic > Feature > optional Story
 - Features are classified as size:small (directly implementable) or size:large (decomposed into stories)
-- PRD and PI are git files; Epic/Feature/Story are GitHub Issues
+- PRD is a git file; PI/Epic/Feature/Story are GitHub Issues
 - All metadata via GitHub Labels (not Projects) — Timeline API dependency
 - Dependencies are bidirectional: `- Blocked by: #N` matched by `- Blocks: #N`
 - Drafts live in `.claude/sdlc/drafts/` and are never committed
-- Commits use conventional format: `docs(prd):`, `docs(pi):`, etc.
+- Commits use conventional format: `docs(prd):`, etc.
 
 ## Prerequisites
 
