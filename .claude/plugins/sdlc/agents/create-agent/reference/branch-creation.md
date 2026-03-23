@@ -1,6 +1,6 @@
 # Branch Creation Reference
 
-Shared reference for creating and linking a Git branch to a GitHub Issue. Used by execution references (`epic-execution.md`, `feature-execution.md`, `story-execution.md`) and the `/setup-dev` skill.
+Shared reference for creating and linking a Git branch to a GitHub Issue. Used by execution references (`epic-execution.md`, `feature-execution.md`, `story-execution.md`), the `/setup-dev` skill, and chore/bug branch workflows.
 
 ## Inputs
 
@@ -8,10 +8,13 @@ Shared reference for creating and linking a Git branch to a GitHub Issue. Used b
 |----------|-------------|
 | `ISSUE_NUM` | The issue number to link the branch to |
 | `ISSUE_TITLE` | The issue title (used to generate the branch name slug) |
-| `LEVEL` | Artifact level: `epic`, `feature`, or `story` |
+| `LEVEL` | Artifact level: `epic`, `feature`, `story`, `chore`, or `bug` |
 | `PARENT_ISSUE` | Parent issue number, or `none` (for epics, or when no parent exists) |
+| `BASE_BRANCH` | *(Optional)* Pre-resolved base branch name. If provided, skip Step 1 (parent resolution). Used by bug workflow. |
 
 ## Step 1: Resolve Parent Branch
+
+If `BASE_BRANCH` is already provided (e.g., from the bug workflow in setup-dev), skip this step entirely — go directly to Step 2.
 
 If `PARENT_ISSUE` is `none`, set `BASE_BRANCH=main` and skip to Step 2.
 

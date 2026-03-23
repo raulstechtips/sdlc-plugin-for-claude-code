@@ -45,12 +45,32 @@ Extract the following variables:
 - `type:epic` → `epic`
 - `type:feature` → `feature`
 - `type:story` → `story`
-- If no recognized `type:` label is found, **abort** with: "Cannot determine artifact level. This skill only supports epic, feature, and story issues."
+- `type:chore` → `chore`
+- `type:bug` → `bug`
+- If no recognized `type:` label is found, **abort** with: "Cannot determine artifact level. This skill only supports epic, feature, story, chore, and bug issues."
 
 **ISSUE_TITLE** — from the issue title.
 
 **PARENT_ISSUE** — from the `## Parent` section in the body, with explicit mapping per type:
 - `type:epic` → `PARENT_ISSUE=none`
+- `type:chore` → `PARENT_ISSUE=none`
+- `type:bug` → **Interactive parent resolution.** Prompt the user:
+
+  > "Which branch should this bug branch be based on? You can provide:
+  > - A branch name (e.g., `feature/execution-skills-stabilization`)
+  > - An issue number (e.g., `#4`) — I'll resolve its linked branch"
+
+  Based on the user's response:
+
+  1. **Branch name** (no `#` prefix): Verify the branch exists with `git ls-remote --heads origin <branch-name>`. If it exists, set `BASE_BRANCH=<branch-name>`. If not, warn the user and re-prompt.
+
+  2. **Issue number** (`#N` or `N`): Run `gh issue develop <N> --list`.
+     - **No linked branches** — warn: "Issue #N has no linked branch." Re-prompt.
+     - **Exactly one branch** — set `BASE_BRANCH=<that branch>`.
+     - **Multiple branches** — present the list and ask the user to pick one.
+
+  Once `BASE_BRANCH` is resolved, set `PARENT_ISSUE=none` (the base branch is passed directly to branch-creation via the `BASE_BRANCH` variable, skipping its parent resolution step).
+
 - `type:feature` → extract issue number after `Epic:` in `## Parent` (e.g., `Epic: #5` → `5`)
 - `type:story` → extract issue number after `Feature:` in `## Parent` (e.g., `Epic: #5, Feature: #12` → `12`)
 - If `## Parent` section is missing or the expected field cannot be parsed, set `PARENT_ISSUE=none` and warn the user: "Could not resolve parent issue — branching from main."
@@ -71,6 +91,7 @@ Follow the procedure in [`branch-creation.md`](../../agents/create-agent/referen
 - `ISSUE_TITLE` — from Step 3
 - `LEVEL` — from Step 3
 - `PARENT_ISSUE` — from Step 3
+- `BASE_BRANCH` — *(bugs only)* from Step 3's interactive resolution. When provided, branch-creation skips its own parent resolution.
 
 After branch creation, store the resulting branch name as `BRANCH_NAME`.
 
@@ -106,7 +127,7 @@ gh issue edit <ISSUE_NUM> --add-label "status:in-progress"
 Display to the user:
 - Branch name
 - Issue title and number
-- Status: `in-progress` (stories) or current status (epics/features)
+- Status: `in-progress` (stories) or current status (epics/features/chores/bugs)
 
 Example output:
 
