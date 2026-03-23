@@ -51,14 +51,31 @@ Extract the following variables:
 
 **ISSUE_TITLE** — from the issue title.
 
-**PARENT_ISSUE** — from the `## Parent` section in the body, with explicit mapping per type:
-- `type:epic` → `PARENT_ISSUE=none`
-- `type:chore` → `PARENT_ISSUE=none`
-- `type:bug` → **Interactive parent resolution.** Prompt the user:
+**PARENT_ISSUE** — resolved via a unified algorithm for all types:
 
-  > "Which branch should this bug branch be based on? You can provide:
+**Phase 1: Parse `## Parent` section.** Extract from the issue body, checking fields in priority order:
+1. `Feature: #N` → candidate = N
+2. `Epic: #N` → candidate = N
+3. `PI: #N` → candidate = N
+
+First match wins.
+
+**Phase 2: Confirm or prompt.**
+
+- **If candidate found** → confirm with the user:
+
+  > "Found parent issue #N. Use its branch as the base? (Or provide a different branch/issue number, or press enter to branch from `main`)"
+
+  - User confirms → `PARENT_ISSUE=<candidate>`
+  - User provides alternative → resolve using the same flow as "no candidate" below
+  - User presses enter → `PARENT_ISSUE=none` (branches from `main`)
+
+- **If no candidate** (no `## Parent` section, or no recognized field) → prompt the user:
+
+  > "No parent found for this issue. You can provide:
   > - A branch name (e.g., `feature/execution-skills-stabilization`)
-  > - An issue number (e.g., `#4`) — I'll resolve its linked branch"
+  > - An issue number (e.g., `#4`) — I'll resolve its linked branch
+  > - Or press enter to branch from `main`"
 
   Based on the user's response:
 
@@ -69,11 +86,7 @@ Extract the following variables:
      - **Exactly one branch** — set `BASE_BRANCH=<that branch>`.
      - **Multiple branches** — present the list and ask the user to pick one.
 
-  Once `BASE_BRANCH` is resolved, set `PARENT_ISSUE=none` (the base branch is passed directly to branch-creation via the `BASE_BRANCH` variable, skipping its parent resolution step).
-
-- `type:feature` → extract issue number after `Epic:` in `## Parent` (e.g., `Epic: #5` → `5`)
-- `type:story` → extract issue number after `Feature:` in `## Parent` (e.g., `Epic: #5, Feature: #12` → `12`)
-- If `## Parent` section is missing or the expected field cannot be parsed, set `PARENT_ISSUE=none` and warn the user: "Could not resolve parent issue — branching from main."
+  3. **Empty / enter** — `PARENT_ISSUE=none` (branches from `main`).
 
 ## Step 4: Check for Existing Linked Branch
 
@@ -91,7 +104,7 @@ Follow the procedure in [`branch-creation.md`](../../agents/create-agent/referen
 - `ISSUE_TITLE` — from Step 3
 - `LEVEL` — from Step 3
 - `PARENT_ISSUE` — from Step 3
-- `BASE_BRANCH` — *(bugs only)* from Step 3's interactive resolution. When provided, branch-creation skips its own parent resolution.
+- `BASE_BRANCH` — *(optional)* from Step 3's interactive prompt. When provided, branch-creation skips its own parent resolution.
 
 After branch creation, store the resulting branch name as `BRANCH_NAME`.
 
