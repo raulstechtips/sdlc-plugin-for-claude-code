@@ -45,12 +45,14 @@ Extract the following variables:
 - `type:epic` → `epic`
 - `type:feature` → `feature`
 - `type:story` → `story`
-- If no recognized `type:` label is found, **abort** with: "Cannot determine artifact level. This skill only supports epic, feature, and story issues."
+- `type:chore` → `chore`
+- If no recognized `type:` label is found, **abort** with: "Cannot determine artifact level. This skill only supports epic, feature, story, chore, and bug issues."
 
 **ISSUE_TITLE** — from the issue title.
 
 **PARENT_ISSUE** — from the `## Parent` section in the body, with explicit mapping per type:
 - `type:epic` → `PARENT_ISSUE=none`
+- `type:chore` → `PARENT_ISSUE=none`
 - `type:feature` → extract issue number after `Epic:` in `## Parent` (e.g., `Epic: #5` → `5`)
 - `type:story` → extract issue number after `Feature:` in `## Parent` (e.g., `Epic: #5, Feature: #12` → `12`)
 - If `## Parent` section is missing or the expected field cannot be parsed, set `PARENT_ISSUE=none` and warn the user: "Could not resolve parent issue — branching from main."
