@@ -57,7 +57,7 @@ STOP. Do not proceed further.
 
 ## Step 2: Read Label Taxonomy
 
-Parse the PRD for a `## Label Taxonomy` section. If found, extract the area label names from the table rows (each row has `| area:<name> | <description> |`).
+Parse the PRD for a `## Label Taxonomy` section. If found, scan the table and extract all values matching the `area:<name>` pattern from any cell. Labels may appear comma-separated within a single cell (e.g., `area:skills`, `area:agents`, `area:templates` in one row). Collect all unique area names into `AREA_LABELS`.
 
 If no Label Taxonomy section exists, announce:
 
