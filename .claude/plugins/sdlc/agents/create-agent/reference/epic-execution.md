@@ -6,6 +6,7 @@
 - `name` — epic name
 - `priority` — one of: `critical`, `high`, `medium`, `low`
 - `areas` — array of area labels (e.g., `[auth, api]`)
+- `parent-pi` — parent PI issue number
 
 ### Body Sections
 - `## Overview` — non-empty
@@ -46,7 +47,7 @@ Follow [`branch-creation.md`](branch-creation.md) with:
 - `ISSUE_NUM` = `<EPIC_NUM>`
 - `ISSUE_TITLE` = `<name>`
 - `LEVEL` = `epic`
-- `PARENT_ISSUE` = `none` (use `main`)
+- `PARENT_ISSUE` = `<parent-pi>`
 
 ### 3. Bidirectional Dependency Linking
 
@@ -67,26 +68,17 @@ BLOCKER_BODY=$(gh issue view <N> --json body --jq '.body')
 echo "$UPDATED_BLOCKER_BODY" | gh issue edit <N> --body-file -
 ```
 
-### 4. Update PI.md
+### 4. Update Parent PI Issue
 
-Read `.claude/sdlc/pi/PI.md` and replace the `#TBD` placeholder next to this epic's name with the real issue number.
-
-```bash
-# The PI.md has lines like:
-# ### Epic: Auth Setup (#TBD)
-# Replace (#TBD) with (#<EPIC_NUM>) for the matching epic name
-```
-
-Write the updated PI.md back.
-
-### 5. Commit PI.md Update
+Replace the `#TBD` placeholder in the parent PI issue body with the real epic number:
 
 ```bash
-git add .claude/sdlc/pi/PI.md
-git commit -m "docs(pi): add issue numbers for epic <name> (#<EPIC_NUM>)"
+PI_BODY=$(gh issue view <parent-pi> --json body --jq '.body')
+UPDATED_BODY=$(echo "$PI_BODY" | sed "s/### Epic: <EPIC_NAME> (#TBD)/### Epic: <EPIC_NAME> (#<EPIC_NUM>)/")
+gh issue edit <parent-pi> --body "$UPDATED_BODY"
 ```
 
-### 6. Clean Up Temp Files
+### 5. Clean Up Temp Files
 
 ```bash
 rm -f /tmp/sdlc-epic-body.md
@@ -101,5 +93,4 @@ rm -f /tmp/sdlc-epic-body.md
 >
 > **Updated:**
 > - Blocker #`<N>` body: added `Blocks: #<EPIC_NUM>` to Dependencies
-> - PI.md: replaced `#TBD` with #`<EPIC_NUM>`
-> - Committed: `docs(pi): add issue numbers for epic <name> (#<EPIC_NUM>)`
+> - PI issue #`<parent-pi>`: replaced `#TBD` with #`<EPIC_NUM>`
