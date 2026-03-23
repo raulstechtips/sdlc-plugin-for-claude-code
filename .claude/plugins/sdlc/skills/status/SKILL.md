@@ -107,11 +107,11 @@ Replace `YYYY-MM-DD` with the actual computed cutoff date.
 
 ### 2e. PI Context
 
-```
-Read .claude/sdlc/pi/PI.md
+```bash
+gh issue list --label "type:pi" --state open --json number,title,body --jq '.[0]'
 ```
 
-If the file does not exist, skip this step silently — PI context is supplementary.
+If no open PI issue is found, skip this step silently — PI context is supplementary.
 
 ### 2f. Stale Drafts
 
@@ -201,7 +201,7 @@ For each file found in `.claude/sdlc/drafts/`:
 Output the briefing using this exact format. Omit any section that has zero items (except Momentum — always show it).
 
 ```
-## Current PI: <PI name from PI.md, or "Unknown PI" if not found>
+## Current PI: <PI name from active PI issue, or "No active PI" if not found>
 
 ### In Progress (<count>)
 - #<N> <title> (<area>) — <age> [STALE if applicable]
@@ -285,7 +285,7 @@ Before finishing, verify ALL steps were completed:
 - [ ] Step 2b: Blocked stories fetched
 - [ ] Step 2c: Ready stories fetched
 - [ ] Step 2d: Recently closed stories fetched
-- [ ] Step 2e: PI.md read (or skipped if missing)
+- [ ] Step 2e: Active PI issue fetched (or skipped if not found)
 - [ ] Step 2f: Drafts directory scanned (or skipped if missing)
 - [ ] Step 3a: In-progress age and stale flag computed
 - [ ] Step 3b: Root blockers traced (not just immediate blockers)
