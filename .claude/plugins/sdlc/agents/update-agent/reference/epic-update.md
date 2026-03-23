@@ -129,7 +129,7 @@ If a circular dependency is detected: STOP, report the cycle to the user, and re
 
 After updating an epic:
 
-- **If title changed**: check PI.md for references to the old title. Flag for update.
+- **If title changed**: check the active PI issue for references to the old title. Flag for update.
 - **If priority changed**: flag child features/stories that inherit this priority.
 
 ```bash
@@ -140,4 +140,4 @@ gh issue list --search "#<N> in:body" --label "type:story" --json number,title -
 
 - **If scope changed** (via escalation + reshape draft): flag all child features and stories.
 - **If success criteria changed**: flag features whose scope derives from the changed criteria.
-- **If deps changed**: update cross-references (handled in Dependency Maintenance above) and update PI.md if the dependency graph section references this epic.
+- **If deps changed**: update cross-references (handled in Dependency Maintenance above) and update the PI issue if the dependency graph section references this epic.

@@ -190,7 +190,7 @@ For each file found in `.claude/sdlc/drafts/`:
 
 ### 3f. Momentum Calculation
 
-- Total PI stories closed: count of all closed `type:story` issues. If PI.md loaded, compare against planned total.
+- Total PI stories closed: count of all closed `type:story` issues. If PI issue loaded, compare against planned total.
 - Stories closed in last 7 days: count from Step 2d.
 - Stories remaining: in-progress + blocked + ready counts combined.
 

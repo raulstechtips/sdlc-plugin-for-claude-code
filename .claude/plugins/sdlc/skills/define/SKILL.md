@@ -178,7 +178,8 @@ Informational guidance — no dispatching, no "want me to create?". Content is l
 - **Feature (large)** → "Stories #A, #B created as stubs. Run `/sdlc:define story #A` to flesh one out."
 - **Feature (small)** → "Feature is directly implementable. Ready to develop."
 - **Story** → "Next unfinished story under this feature is #B, or all stories defined — ready to develop."
-- **PRD/PI** → "Committed. Run `/sdlc:define epic` to start decomposing."
+- **PRD** → "Committed. Run `/sdlc:define epic` to start decomposing."
+- **PI** → "Created as GitHub Issue. Run `/sdlc:define epic` to start decomposing."
 
 ## Pre-Flight Checks
 

@@ -107,7 +107,7 @@ Run all queries below. For PI-scoped retros with many stories (10+), dispatch a 
 
 ### 2a. Planned vs Delivered
 
-From PI.md (if available), extract the planned list of epics, features, and stories. Then fetch actual closed issues:
+From the active PI issue body (if available), extract the planned list of epics, features, and stories. Then fetch actual closed issues:
 
 ```bash
 # Closed stories in scope
@@ -128,7 +128,7 @@ gh issue list \
   [--search '"Feature: #N" in:body' if feature scope]
 ```
 
-Record: `PLANNED_COUNT` (from PI.md or 0 if unavailable), `DELIVERED_COUNT`, `CARRIED_COUNT`, `CARRIED_ISSUES` (list of open story numbers).
+Record: `PLANNED_COUNT` (from the active PI issue or 0 if unavailable), `DELIVERED_COUNT`, `CARRIED_COUNT`, `CARRIED_ISSUES` (list of open story numbers).
 
 ### 2b. Time In-Progress (per story)
 
