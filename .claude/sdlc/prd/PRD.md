@@ -6,9 +6,9 @@ created: 2026-03-20
 
 ## Overview
 
-SDLC Plugin for Claude Code is a Claude Code plugin that provides structured software development lifecycle management through collaborative brainstorming, GitHub Issues, and git-versioned artifacts. It enables developers to plan, decompose, execute, track, and retrospect on work using a hierarchical work-item model (PRD > PI > Epic > Feature > Story) with process discipline enforced through mandatory phases and hard gates.
+SDLC Plugin for Claude Code is a Claude Code plugin that provides structured software development lifecycle management through collaborative brainstorming, GitHub Issues, and git-versioned artifacts. It enables developers to plan, decompose, execute, track, and ship work using a hierarchical work-item model (PRD > PI > Epic > Feature > Story) with process discipline enforced through mandatory phases and hard gates.
 
-The plugin splits source of truth strategically: the PRD owns product requirements (git-versioned), and GitHub Issues own all planning and work artifacts — PI Plans, Epics, Features, and Stories — with acceptance criteria, dependencies, and status tracking. All process metrics are derived from GitHub's Timeline API via label change events, enabling data-driven retrospectives.
+The plugin splits source of truth strategically: the PRD owns product requirements (git-versioned), and GitHub Issues own all planning and work artifacts — PI Plans, Epics, Features, and Stories — with acceptance criteria, dependencies, and status tracking. All process metrics are derived from GitHub's Timeline API via label change events, enabling data-driven process insights.
 
 ## Tech Stack
 
@@ -21,7 +21,7 @@ The plugin splits source of truth strategically: the PRD owns product requiremen
 
 ## Architecture
 
-The plugin is a collection of 6 skills and 4 agents organized under `.claude/plugins/sdlc/`, each skill with a `SKILL.md` defining behavior and each agent with an `AGENT.md` and optional `reference/` guides containing level-specific execution instructions.
+The plugin is a collection of 7 skills and 4 agents organized under `.claude/plugins/sdlc/`, each skill with a `SKILL.md` defining behavior and each agent with an `AGENT.md` and optional `reference/` guides containing level-specific execution instructions.
 
 **Define-driven artifact workflow:**
 1. **Brainstorm:** `sdlc:define` collaborates with the user, producing a local draft file in `.claude/sdlc/drafts/`
@@ -42,10 +42,12 @@ PRD (git: .claude/sdlc/prd/PRD.md)
 - `sdlc:define` brainstorms, produces drafts, and dispatches create-agent or update-agent for execution
 - `sdlc:status` is read-only — gathers state from GitHub Issues and PI Plan
 - `sdlc:reconcile` audits and fixes label drift across all open issues
-- `sdlc:retro` analyzes completed work using Timeline API metrics
+- `sdlc:capture` creates typed work items (bug, chore, triage) with dedicated templates
+- `sdlc:setup-dev` aligns a worktree to an issue's linked branch for development
+- `sdlc:finish-dev` creates a PR to merge a roll-up branch into its parent branch
 
 **Key architectural decisions:**
-- Labels-only approach (no GitHub Projects) — Project field changes don't appear in the Timeline API, which would break retrospective metrics
+- Labels-only approach (no GitHub Projects) — Project field changes don't appear in the Timeline API, which would break label-based status tracking
 - Bidirectional dependency linking — every "Blocked by" in issue A is matched by a "Blocks" in issue B
 - Creative brainstorming with lightweight checklists — define skill uses free-form conversation guided by internal checklists, replacing the rigid depth-based question system
 - Define owns the full lifecycle — brainstorm, draft, execute, impact analysis. Define dispatches create-agent and update-agent directly, eliminating the separate create/update skill handoff
@@ -105,17 +107,15 @@ The plugin interacts with external systems exclusively through CLI tools:
 | Edit PI issue | `gh issue edit <number> --body "..."` | update (PI) |
 | View issue | `gh issue view <number> --json title,body,labels,state` | define, update, status, reconcile |
 | Edit issue | `gh issue edit <number> --add-label/--remove-label/--body "..."` | update, reconcile |
-| List issues | `gh issue list --label "..." --state open --json number,title,labels` | status, reconcile, retro |
+| List issues | `gh issue list --label "..." --state open --json number,title,labels` | status, reconcile |
 | Close issue | `gh issue close <number>` | reconcile |
 | Create label | `gh label create "name" --description "..." --color "..."` | init |
-| Timeline API | `gh api repos/{owner}/{repo}/issues/{number}/timeline` | retro |
 
 ### Git
 
 | Operation | Command Pattern | Used By |
 |-----------|----------------|---------|
 | Commit artifact | `git add <file> && git commit -m "..."` | create (PRD) |
-| Read history | `git log --fixed-strings --grep="(#N)"` | retro |
 
 ## Security Constraints
 
@@ -133,21 +133,24 @@ The plugin interacts with external systems exclusively through CLI tools:
 | `sdlc:define` | Collaborative brainstorming, draft production, and artifact execution via agent dispatch | Planning + Execution | Yes (draft file, issues, git files) |
 | `sdlc:status` | Read-only project briefing with next actions | Monitoring | No |
 | `sdlc:reconcile` | Audit and fix label drift | Maintenance | Yes (labels, open/closed state) |
-| `sdlc:retro` | Process metrics and retrospective analysis | Analysis | Yes (retro file, git commit) |
+| `sdlc:setup-dev` | Align worktree to issue branch and start development | Execution | Yes (git checkout, status label) |
+| `sdlc:finish-dev` | Create PR to merge roll-up branch into parent branch | Shipping | Yes (creates PR) |
 
 **Skill interaction flow:**
 ```
-sdlc:init (once) → sdlc:define (brainstorm + execute) → sdlc:status / sdlc:reconcile → sdlc:retro
+sdlc:init (once) → sdlc:define (brainstorm + execute) → sdlc:setup-dev → work → sdlc:finish-dev
+                    sdlc:status / sdlc:reconcile (monitoring)
                     sdlc:capture (bug/chore/triage) → sdlc:define (later, for promotion)
 ```
 
 ## Roadmap
 
-1. **Bug fixes and stabilization** — Ensure all 6 core skills work correctly end-to-end through a full lifecycle (define PRD → plan PI → decompose → track → reconcile → retro)
+1. **Bug fixes and stabilization** — Ensure all 7 core skills work correctly end-to-end through a full lifecycle (define PRD → plan PI → decompose → track → reconcile → ship)
 2. **Missing update reference guides** — Add pi-update.md, epic-update.md, feature-update.md, story-update.md
 3. **`sdlc:audit`** — Technical verification skill that compares shipped code against PRD/PI/epic/feature/story specs using recursive subagent chains
-4. **PI Changelog** — Append-only invocation tracking for `sdlc:update` and `sdlc:define` changes, enabling richer retrospective metrics
+4. **PI Changelog** — Append-only invocation tracking for `sdlc:update` and `sdlc:define` changes, enabling richer process insights
 5. ~~Agents~~ — ✅ Four operational agents (impact-analysis, create-agent, update-agent, draft-reviewer) dispatched by define
+6. **Retrospective analysis** — Future skill for data-driven process retrospectives using Timeline API metrics (deferred from v1)
 
 ## Acceptance Criteria
 
@@ -155,9 +158,10 @@ sdlc:init (once) → sdlc:define (brainstorm + execute) → sdlc:status / sdlc:r
 - [ ] `sdlc:define` supports creative brainstorming, draft production, artifact execution via agent dispatch, and impact analysis for each artifact level
 - [ ] `sdlc:status` produces accurate briefings showing in-progress, blocked, ready, and parallelizable work
 - [ ] `sdlc:reconcile` detects and fixes stale labels, unclosed parents, and dependency mismatches
-- [ ] `sdlc:retro` generates retrospective documents with accurate metrics from Timeline API data
 - [ ] `sdlc:capture` creates typed issues (bug, chore, triage) with dedicated templates from quick input
-- [ ] Full lifecycle can be run end-to-end: PRD → PI → Epics → Features → Stories → Status → Reconcile → Retro
+- [ ] `sdlc:setup-dev` aligns a worktree to an issue's linked branch and starts development
+- [ ] `sdlc:finish-dev` creates PRs with child-issue summaries and context-aware test plans
+- [ ] Full lifecycle can be run end-to-end: PRD → PI → Epics → Features → Stories → Setup-dev → Work → Finish-dev → Reconcile
 - [ ] `size:small` features can be created without a Stories section
 - [ ] `size:large` features require at least one story
 - [ ] Impact analysis correctly identifies cascading updates to PI, parent issues, and PRD
@@ -165,7 +169,7 @@ sdlc:init (once) → sdlc:define (brainstorm + execute) → sdlc:status / sdlc:r
 
 ## Out of Scope
 
-- **GitHub Projects integration** — Decided against; Project field changes don't appear in the Timeline API, breaking retrospective metrics
+- **GitHub Projects integration** — Decided against; Project field changes don't appear in the Timeline API, breaking label-based tracking
 - **`sdlc:audit`** — Future skill for technical verification against specs
 - **PI Changelog** — Future append-only invocation tracking mechanism
 - **GUI/web interface** — Plugin operates entirely through Claude Code CLI
@@ -176,7 +180,7 @@ sdlc:init (once) → sdlc:define (brainstorm + execute) → sdlc:status / sdlc:r
 
 | Date | Decision | Reason | Affects |
 |------|----------|--------|---------|
-| 2026-03-20 | Labels-only metadata (no GitHub Projects) | Project field changes don't appear in Timeline API, which would break retro metrics that depend on label change events | Architecture, Reconcile, Retro, Status |
+| 2026-03-20 | Labels-only metadata (no GitHub Projects) | Project field changes don't appear in Timeline API, which would break label-based tracking that depends on label change events | Architecture, Reconcile, Status |
 | 2026-03-20 | ~~Git-versioned PRD and PI (not GitHub Issues)~~ | ~~PRD and PI are stable documents that benefit from version control, diffing, and archival — unlike work items which need GitHub's collaboration features~~ — **PI portion superseded** by PI-to-issue migration (see 2026-03-23) | Architecture, Create, Update |
 | 2026-03-20 | Bidirectional dependency linking | Enables reliable blocker detection and root-cause tracing in status/reconcile without needing to scan all issues | Data Models, Create, Update, Reconcile |
 | 2026-03-20 | Two-phase artifact workflow (define → create/update) | Separates creative brainstorming from execution, preventing half-formed artifacts from reaching GitHub | Architecture, Define, Create, Update |
@@ -187,5 +191,6 @@ sdlc:init (once) → sdlc:define (brainstorm + execute) → sdlc:status / sdlc:r
 | 2026-03-21 | Size labels for features (size:small, size:large) | Visible classification of feature complexity enables better planning, validation, and reconciliation | Labels, Init, Reconcile, Feature Execution |
 | 2026-03-21 | Concrete area labels replacing placeholder | Area labels map to architectural zones of the plugin: skills, agents, templates, reference guides, manifests, runtime artifacts, and docs — chosen because work naturally clusters around these boundaries and each has a distinct change cadence | Labels, Init, Status, Reconcile |
 | 2026-03-22 | Define absorbs execution — create/update skills removed | Simpler workflow with fewer handoffs; define dispatches agents directly so artifacts get real issue numbers before impact analysis, eliminating the separate create/update skill invocation | Architecture, Skill Inventory, plugin.json, PI Goals |
-| 2026-03-23 | PI migrated from git file to GitHub Issue | Unifies artifact model, closes branch hierarchy gap (main → PI → epic → feature → story), enables epic stub creation during PI define | Architecture, Create, Update, Init, Status, Retro |
+| 2026-03-23 | PI migrated from git file to GitHub Issue | Unifies artifact model, closes branch hierarchy gap (main → PI → epic → feature → story), enables epic stub creation during PI define | Architecture, Create, Update, Init, Status |
 | 2026-03-23 | Remove type:spike from label taxonomy | Spike concept is unused — exploratory work is tracked via triage capture and promoted through define; a dedicated spike type adds complexity without value | Labels, Init, SDLC Guide |
+| 2026-03-23 | Remove retro skill; add finish-dev | Retro requires substantial Timeline API infrastructure with limited near-term value; finish-dev fills the critical gap of closing roll-up branches with proper PRs | Skill Inventory, Architecture, Roadmap |
