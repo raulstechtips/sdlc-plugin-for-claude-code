@@ -160,13 +160,15 @@ If any are missing, suggest: "Consider enabling [plugin] for [benefit]."
 
 Present a summary:
 
+Compute label counts from the labels actually created in Step 3: count the universal labels (type + status + priority + size + triage) and the area labels separately, then sum for the total.
+
 ```
 ## SDLC Init Complete
 
 **Labels:**
-- Universal: 15 labels (type, status, priority, size, triage)
-- Project areas: N labels from PRD Label Taxonomy
-- Total: N+12 labels ensured
+- Universal: <count> labels (type, status, priority, size, triage)
+- Project areas: <count> labels from PRD Label Taxonomy
+- Total: <sum> labels ensured
 
 **Directories:**
 - .claude/sdlc/prd/ ✓
