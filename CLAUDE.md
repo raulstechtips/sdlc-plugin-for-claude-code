@@ -7,8 +7,8 @@ Claude Code plugin (v2.0.0) providing structured SDLC management via GitHub Issu
 .claude/plugins/sdlc/          # Plugin source
   plugin.json                  # Manifest
   templates/                   # Shared draft templates (rigid output formats)
-  skills/                      # 6 skills
-    init/ capture/ define/ status/ reconcile/ retro/
+  skills/                      # 7 skills
+    init/ capture/ define/ status/ reconcile/ retro/ setup-dev/
   agents/                      # 4 agents
     draft-reviewer/ create-agent/ update-agent/ impact-analysis-agent/
 
@@ -31,6 +31,7 @@ Skills are invoked as slash commands. The lifecycle:
 4. `/sdlc:reconcile` — audit and fix label drift
 5. `/sdlc:retro` — process metrics and retrospective
 6. `/sdlc:capture` — type-aware capture of bugs, chores, and triage items
+7. `/sdlc:setup-dev #N` — align worktree to issue branch, start development
 
 Define handles the full lifecycle: brainstorm → draft → execute → impact analysis. Capture creates typed work items with light ceremony.
 

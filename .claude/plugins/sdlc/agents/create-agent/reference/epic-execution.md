@@ -40,7 +40,15 @@ EPIC_NUM=$(echo "$EPIC_URL" | grep -o '[0-9]*$')
 
 **Note:** Do NOT add a `status:` label to epics. Status labels are for stories only.
 
-### 2. Bidirectional Dependency Linking
+### 2. Create and Link Branch
+
+Follow [`branch-creation.md`](branch-creation.md) with:
+- `ISSUE_NUM` = `<EPIC_NUM>`
+- `ISSUE_TITLE` = `<name>`
+- `LEVEL` = `epic`
+- `PARENT_ISSUE` = `none` (use `main`)
+
+### 3. Bidirectional Dependency Linking
 
 If the epic draft has a `## Dependencies` section with `Blocked by: #N, #M`:
 
@@ -59,7 +67,7 @@ BLOCKER_BODY=$(gh issue view <N> --json body --jq '.body')
 echo "$UPDATED_BLOCKER_BODY" | gh issue edit <N> --body-file -
 ```
 
-### 3. Update PI.md
+### 4. Update PI.md
 
 Read `.claude/sdlc/pi/PI.md` and replace the `#TBD` placeholder next to this epic's name with the real issue number.
 
@@ -71,14 +79,14 @@ Read `.claude/sdlc/pi/PI.md` and replace the `#TBD` placeholder next to this epi
 
 Write the updated PI.md back.
 
-### 4. Commit PI.md Update
+### 5. Commit PI.md Update
 
 ```bash
 git add .claude/sdlc/pi/PI.md
 git commit -m "docs(pi): add issue numbers for epic <name> (#<EPIC_NUM>)"
 ```
 
-### 5. Clean Up Temp Files
+### 6. Clean Up Temp Files
 
 ```bash
 rm -f /tmp/sdlc-epic-body.md
@@ -89,6 +97,7 @@ rm -f /tmp/sdlc-epic-body.md
 > **Created:**
 > - Epic: #`<EPIC_NUM>` — "`<name>`"
 >   - Labels: `type:epic`, `priority:<priority>`, `area:<areas>`
+>   - Branch: `epic/<EPIC_NUM>-<slugified-name>` (linked to issue)
 >
 > **Updated:**
 > - Blocker #`<N>` body: added `Blocks: #<EPIC_NUM>` to Dependencies
