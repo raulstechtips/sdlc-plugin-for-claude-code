@@ -127,7 +127,7 @@ gh issue edit <ISSUE_NUM> --add-label "status:in-progress"
 Display to the user:
 - Branch name
 - Issue title and number
-- Status: `in-progress` (stories) or current status (epics/features)
+- Status: `in-progress` (stories) or current status (epics/features/chores/bugs)
 
 Example output:
 
