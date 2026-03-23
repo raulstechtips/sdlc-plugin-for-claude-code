@@ -1,6 +1,6 @@
 ---
 name: define
-description: Use when defining new SDLC artifacts (PRD, PI, epic, feature, story) or reshaping existing ones through collaborative brainstorming that produces a reviewable local draft.
+description: Use when defining new SDLC artifacts (PRD, PI, epic, feature, story, bug, chore) or reshaping existing ones through collaborative brainstorming that produces a reviewable local draft.
 allowed-tools: Read, Edit, Write, Bash, Grep, Glob, Agent
 argument-hint: "[level] [identifier]"
 ---
@@ -34,11 +34,16 @@ You MUST create a task for each of these phases and complete them in order:
 Parse `$ARGUMENTS` for an optional level and optional identifier.
 
 - If level provided: load brainstorming guide from `${CLAUDE_PLUGIN_ROOT}/skills/define/reference/<level>-brainstorm.md`
+- **Exception — chore level:** load `${CLAUDE_PLUGIN_ROOT}/skills/define/reference/story-brainstorm.md` instead (no `chore-brainstorm.md` exists). Note: parent-related questions in the story guide are conditional for chores — standalone chores skip them.
 - If no level: proceed without a guide — the brainstorm will discover the level
 - Read `.claude/sdlc/prd/PRD.md` for project context
 - Read `.claude/sdlc/pi/PI.md` if it exists
 - Check pre-flight requirements (see Pre-Flight Checks below)
 - Detect new vs reshape: issue number in args = reshape; "reshape/rethink/revise/update" keywords = reshape; existing draft in drafts dir = ask user
+- If args contain only an issue number (#N) with no level keyword: check the issue's labels via `gh issue view <N> --json labels`:
+  - Has `type:bug` label → set level to `bug`, load `bug-brainstorm.md` (via the generic rule)
+  - Has `type:chore` label → set level to `chore`, load `story-brainstorm.md` (via the chore exception)
+  - Has `triage` label → ask the user what level this should become (may be feature, story, bug, or chore)
 
 ### Phase 2: Creative Brainstorming
 
@@ -179,6 +184,8 @@ Informational guidance — no dispatching, no "want me to create?". Content is l
 | Epic | PRD exists. PI exists. |
 | Feature | PRD exists. PI exists. Parent epic resolvable via `gh issue view`. |
 | Story | PRD exists. Parent feature and parent epic resolvable via `gh issue view`. |
+| Bug | PRD exists. No parent requirements — bugs are peers to the hierarchy. |
+| Chore | PRD exists. If parented, parent epic/feature resolvable via `gh issue view`. |
 
 If prerequisites are missing, tell the user what needs to exist first and suggest the appropriate `/sdlc:define` invocation.
 
