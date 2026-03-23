@@ -23,6 +23,7 @@ Do NOT produce a draft without completing all phases in order. Do NOT skip a pha
 | "The user didn't specify a level, I'll guess" | Ask. Propose with reasoning. Don't assume. |
 | "I'll combine brainstorming and drafting" | Creative exploration and structured output are separate phases. Finish brainstorming before drafting. |
 | "This impact is obvious, no need to discuss" | Every impact is presented to the user. Even obvious ones get confirmed. |
+| "I'll skip execution, the user can run /sdlc:create" | Phase 8 handles execution. Define is end-to-end now. |
 
 ## Process Flow
 
@@ -99,7 +100,56 @@ Fix any issues the agent finds. Re-dispatch (max 3 iterations). If still failing
 
 Present the full draft. Do not summarize — show everything. Ask: "Want to change anything?" Loop until explicit approval. Do NOT interpret silence or ambiguity as approval.
 
-### Phase 8: Impact Analysis
+### Phase 8: Execution
+
+Dispatch agents to create or update the primary artifact immediately. The user approved the draft in Phase 7 — execute now, before impact analysis, so downstream phases have real issue numbers.
+
+**Decision tree:**
+
+~~~
+Is this a reshape? (draft has ## Changes section)
+├── YES: Is this a reclassification? (draft type ≠ existing issue type label)
+│   ├── YES (reclassification reshape):
+│   │   1. Dispatch update-agent: swap type label, remove stale labels (e.g., size:* if becoming epic), replace body with draft body
+│   │   2. If new level has children (epic/feature-large): dispatch create-agents in parallel for children
+│   │   3. If children created: dispatch update-agent to backfill parent body #TBD → real numbers
+│   └── NO (normal reshape):
+│       1. Dispatch update-agent with Changes table parameters
+├── NO (new artifact): What level?
+│   ├── PRD/PI:
+│   │   1. Dispatch create-agent (handles git add + commit)
+│   ├── Epic:
+│   │   1. Dispatch create-agent for epic → receive issue number
+│   │   2. Dispatch create-agents in parallel for each feature in ## Features checklist (each gets parent-epic = new number)
+│   │   3. Collect all feature issue numbers
+│   │   4. Dispatch update-agent to backfill epic body: replace each #TBD with real feature number
+│   ├── Feature (size:large):
+│   │   1. Dispatch create-agent for feature → receive issue number
+│   │   2. Dispatch create-agents in parallel for each story in ## Stories checklist (each gets parent-feature = new number, parent-epic from draft frontmatter)
+│   │   3. Collect all story issue numbers
+│   │   4. Dispatch update-agent to backfill feature body: replace each #TBD with real story number
+│   ├── Feature (size:small):
+│   │   1. Dispatch create-agent for feature (no children)
+│   └── Story:
+│       1. Dispatch create-agent for story (no children)
+~~~
+
+**Sequencing rule:** The primary artifact MUST be created first (sequential) because children need its issue number for their `## Parent` section. Children can then be created in parallel. The backfill step MUST wait for all children to complete.
+
+**What define passes to agents:**
+
+To create-agent:
+- Draft file path (or inline body for stubs)
+- Artifact level
+- For child stubs: the child name, one-line description from the parent's checklist, parent issue numbers, inherited priority and area labels
+
+To update-agent:
+- Target issue number
+- Level
+- Change description (from Changes table for reshapes, or "backfill #TBD with #N for child-name" for backfills)
+- For reclassification: old type, new type, labels to add, labels to remove, new body content
+
+### Phase 9: Impact Analysis
 
 The confirm-then-dispatch loop:
 
@@ -110,15 +160,15 @@ The confirm-then-dispatch loop:
 5. As each impact is confirmed, dispatch the appropriate operational agent (`create-agent` or `update-agent`)
 6. Independent updates can run in parallel (multiple Agent dispatches in one message); dependent updates run sequentially (create issue first, then reference its number)
 
-### Phase 9: Announce Next Step
+### Phase 10: Next Steps
 
-For new artifacts:
-> "Draft saved to `<path>`. Run `/sdlc:create <level>` when ready to push it live, or I can dispatch the create agent now."
+Informational guidance — no dispatching, no "want me to create?". Content is level-dependent:
 
-For reshapes:
-> "Draft saved with changes documented. Run `/sdlc:update <level> <number>` to apply the changes, or I can dispatch the update agent now."
-
-This refers to the **primary artifact** only. Side-effect artifacts were already dispatched in Phase 8.
+- **Epic** → "Features #X, #Y, #Z created as stubs. Run `/sdlc:define feature #X` to flesh one out."
+- **Feature (large)** → "Stories #A, #B created as stubs. Run `/sdlc:define story #A` to flesh one out."
+- **Feature (small)** → "Feature is directly implementable. Ready to develop."
+- **Story** → "Next unfinished story under this feature is #B, or all stories defined — ready to develop."
+- **PRD/PI** → "Committed. Run `/sdlc:define epic` to start decomposing."
 
 ## Pre-Flight Checks
 
@@ -145,6 +195,6 @@ Rules: dash-prefixed, `#` prefix on issue numbers, comma-space separated, `none`
 
 | Scenario | Flow |
 |----------|------|
-| New artifact | define produces draft → `/sdlc:create` or create-agent pushes to GitHub/git |
-| Reshape existing | define produces draft with Changes section → `/sdlc:update` or update-agent applies edits |
-| Side-effect updates | Impact analysis dispatches create-agent/update-agent for confirmed cascading changes |
+| New artifact | define brainstorms → draft → Phase 8 dispatches create-agent (and create-agents for children if applicable) |
+| Reshape existing | define brainstorms → draft with Changes section → Phase 8 dispatches update-agent |
+| Side-effect updates | Phase 9 (Impact Analysis) dispatches create-agent/update-agent for confirmed cascading changes |
