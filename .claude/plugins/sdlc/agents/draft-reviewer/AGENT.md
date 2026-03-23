@@ -23,7 +23,7 @@ You receive:
 | Dependency Validity | Referenced issue numbers exist and are the correct type (verify via `gh issue view <number> --json title,labels,state`) |
 | Scope | Draft scope matches the level (not a story masquerading as an epic, features match parent epic) |
 | YAGNI | Unrequested sections, over-specification for the level |
-| Size Validation | For feature drafts: `size` field present in frontmatter (must be `small` or `large`). If `size:small`, no `## Stories` section exists. If `size:large`, `## Stories` section exists with at least one item. |
+| Size Validation | For feature drafts: `size` field present in frontmatter (must be `small` or `large`). If `size:small`, no `## Stories` section exists, `## File Scope` section exists. If `size:large`, `## Stories` section exists with at least one item, no `## File Scope` section exists. |
 
 ## What NOT to Check
 
