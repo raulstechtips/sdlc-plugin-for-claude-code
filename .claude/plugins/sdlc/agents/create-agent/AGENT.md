@@ -16,10 +16,10 @@ You receive:
 
 1. Read the draft file
 2. Load the template from `${CLAUDE_PLUGIN_ROOT}/templates/<level>-template.md` to understand the expected structure
-3. Load the execution reference from `${CLAUDE_PLUGIN_ROOT}/skills/create/reference/<level>-execution.md`
+3. Load the execution reference from `${CLAUDE_PLUGIN_ROOT}/agents/create-agent/reference/<level>-execution.md`
 4. Follow the execution reference exactly — it contains the `gh` and `git` commands to run
 
-## What You Skip (vs `/sdlc:create` skill)
+## Behavioral Constraints
 
 You are dispatched by define after the user has already confirmed the action. Therefore:
 - Do NOT ask for user confirmation before creating

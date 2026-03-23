@@ -1,6 +1,6 @@
 ---
 name: draft-reviewer
-description: Reviews SDLC draft artifacts for completeness, consistency with upstream artifacts, and readiness for sdlc:create execution. Use when Task 7 of sdlc:define dispatches you.
+description: Reviews SDLC draft artifacts for completeness, consistency with upstream artifacts, and readiness for execution by create-agent. Use when Task 7 of sdlc:define dispatches you.
 tools: Read, Bash, Grep, Glob
 ---
 
@@ -34,7 +34,7 @@ You receive:
 
 ## Calibration
 
-Only flag issues that would cause real problems when `sdlc:create` or `sdlc:update` tries to execute this draft. A missing required field, a contradiction with the PRD, or a dependency on a nonexistent issue — those are issues. Minor wording improvements and stylistic preferences are not. Approve unless there are serious gaps.
+Only flag issues that would cause real problems when create-agent or update-agent tries to execute this draft. A missing required field, a contradiction with the PRD, or a dependency on a nonexistent issue — those are issues. Minor wording improvements and stylistic preferences are not. Approve unless there are serious gaps.
 
 ## Process
 
@@ -52,7 +52,7 @@ If issues found:
 Status: Issues Found
 
 Issues:
-1. [Section]: [specific problem and why it matters for sdlc:create execution]
+1. [Section]: [specific problem and why it matters for execution]
 2. [Section]: [specific problem and why it matters]
 
 Recommendations (advisory, not blocking):
