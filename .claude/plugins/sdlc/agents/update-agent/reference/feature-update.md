@@ -38,6 +38,8 @@ Common sections in a feature body:
 - `## Description` — feature description
 - `## Stories` — child story checklist
 - `## Non-goals` — bullet list
+- `## File Scope` — files to create and modify (size:small only)
+- `## Technical Notes` — implementation considerations, patterns, decisions
 - `## Dependencies` — `Blocked by:` and `Blocks:` lines
 - `## Parent` — epic reference
 
