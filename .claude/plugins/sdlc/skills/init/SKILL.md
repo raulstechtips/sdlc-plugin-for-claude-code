@@ -73,6 +73,7 @@ Create all labels using `--force` for idempotency (creates if missing, updates c
 
 ```bash
 # Type labels (blue)
+gh label create "type:pi" --color "0075ca" --force
 gh label create "type:epic" --color "0075ca" --force
 gh label create "type:feature" --color "0075ca" --force
 gh label create "type:story" --color "0075ca" --force
@@ -111,7 +112,6 @@ Track counts: how many labels were newly created vs already existed. The `--forc
 
 ```bash
 mkdir -p .claude/sdlc/prd
-mkdir -p .claude/sdlc/pi/completed
 mkdir -p .claude/sdlc/drafts
 mkdir -p .claude/sdlc/retros
 ```
@@ -119,7 +119,7 @@ mkdir -p .claude/sdlc/retros
 Add `.gitkeep` files to any empty directories:
 
 ```bash
-for dir in .claude/sdlc/prd .claude/sdlc/pi .claude/sdlc/pi/completed .claude/sdlc/drafts .claude/sdlc/retros; do
+for dir in .claude/sdlc/prd .claude/sdlc/drafts .claude/sdlc/retros; do
   if [ -z "$(ls -A $dir 2>/dev/null)" ]; then
     touch "$dir/.gitkeep"
   fi
@@ -162,14 +162,12 @@ Present a summary:
 ## SDLC Init Complete
 
 **Labels:**
-- Universal: 14 labels (type, status, priority, size, triage)
+- Universal: 15 labels (type, status, priority, size, triage)
 - Project areas: N labels from PRD Label Taxonomy
 - Total: N+12 labels ensured
 
 **Directories:**
 - .claude/sdlc/prd/ ✓
-- .claude/sdlc/pi/ ✓
-- .claude/sdlc/pi/completed/ ✓
 - .claude/sdlc/drafts/ ✓
 - .claude/sdlc/retros/ ✓
 
