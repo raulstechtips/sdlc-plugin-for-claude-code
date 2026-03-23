@@ -37,7 +37,7 @@ Parse `$ARGUMENTS` for an optional level and optional identifier.
 - **Exception — chore level:** load `${CLAUDE_PLUGIN_ROOT}/skills/define/reference/story-brainstorm.md` instead (no `chore-brainstorm.md` exists). Note: parent-related questions in the story guide are conditional for chores — standalone chores skip them.
 - If no level: proceed without a guide — the brainstorm will discover the level
 - Read `.claude/sdlc/prd/PRD.md` for project context
-- Read `.claude/sdlc/pi/PI.md` if it exists
+- Check for active PI issue: `gh issue list --label "type:pi" --state open --json number,title,body --jq '.[0]'`
 - Check pre-flight requirements (see Pre-Flight Checks below)
 - Detect new vs reshape: issue number in args = reshape; "reshape/rethink/revise/update" keywords = reshape; existing draft in drafts dir = ask user
 - If args contain only an issue number (#N) with no level keyword: check the issue's labels via `gh issue view <N> --json labels`:
@@ -121,8 +121,13 @@ Is this a reshape? (draft has ## Changes section)
 │   └── NO (normal reshape):
 │       1. Dispatch update-agent with Changes table parameters
 ├── NO (new artifact): What level?
-│   ├── PRD/PI:
+│   ├── PRD:
 │   │   1. Dispatch create-agent (handles git add + commit)
+│   ├── PI:
+│   │   1. Dispatch create-agent for PI → receive PI issue number
+│   │   2. Dispatch create-agents in parallel for each epic in ## Epics checklist (each gets parent-pi = new number)
+│   │   3. Collect all epic issue numbers
+│   │   4. Dispatch update-agent to backfill PI body: replace each #TBD with real epic number
 │   ├── Epic:
 │   │   1. Dispatch create-agent for epic → receive issue number
 │   │   2. Dispatch create-agents in parallel for each feature in ## Features checklist (each gets parent-epic = new number)
@@ -173,14 +178,15 @@ Informational guidance — no dispatching, no "want me to create?". Content is l
 - **Feature (large)** → "Stories #A, #B created as stubs. Run `/sdlc:define story #A` to flesh one out."
 - **Feature (small)** → "Feature is directly implementable. Ready to develop."
 - **Story** → "Next unfinished story under this feature is #B, or all stories defined — ready to develop."
-- **PRD/PI** → "Committed. Run `/sdlc:define epic` to start decomposing."
+- **PRD** → "Committed. Run `/sdlc:define epic` to start decomposing."
+- **PI** → "Created as GitHub Issue. Run `/sdlc:define epic` to start decomposing."
 
 ## Pre-Flight Checks
 
 | Level | Prerequisites |
 |-------|--------------|
 | PRD | Check if `.claude/sdlc/prd/PRD.md` exists (greenfield vs brownfield vs reshape) |
-| PI | PRD exists. Check for previous retros. Check for active PI. |
+| PI | PRD exists. Check for previous retros. Check for active PI issue via `gh issue list --label "type:pi" --state open`. |
 | Epic | PRD exists. PI exists. |
 | Feature | PRD exists. PI exists. Parent epic resolvable via `gh issue view`. |
 | Story | PRD exists. Parent feature and parent epic resolvable via `gh issue view`. |

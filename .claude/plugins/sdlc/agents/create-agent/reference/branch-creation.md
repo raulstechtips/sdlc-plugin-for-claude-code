@@ -8,8 +8,8 @@ Shared reference for creating and linking a Git branch to a GitHub Issue. Used b
 |----------|-------------|
 | `ISSUE_NUM` | The issue number to link the branch to |
 | `ISSUE_TITLE` | The issue title (used to generate the branch name slug) |
-| `LEVEL` | Artifact level: `epic`, `feature`, `story`, `chore`, or `bug` |
-| `PARENT_ISSUE` | Parent issue number, or `none` (for epics, or when no parent exists) |
+| `LEVEL` | Artifact level: `pi`, `epic`, `feature`, `story`, `chore`, or `bug` |
+| `PARENT_ISSUE` | Parent issue number, or `none` (for PI, or when no parent exists) |
 | `BASE_BRANCH` | *(Optional)* Pre-resolved base branch name. If provided, skip Step 1 (parent resolution). Used by bug workflow. |
 
 ## Step 1: Resolve Parent Branch

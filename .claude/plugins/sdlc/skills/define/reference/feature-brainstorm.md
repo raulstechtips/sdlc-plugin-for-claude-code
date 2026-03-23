@@ -17,7 +17,7 @@ Internal checklist for the define skill. Weave these into natural conversation �
 ## Context to load
 
 - Read the parent epic: `gh issue view <parent-epic> --json title,body,labels`
-- Read `.claude/sdlc/pi/PI.md` — check if this feature was listed as a scope seed
+- Read active PI issue (`gh issue list --label "type:pi" --state open`) — check if this feature was listed as a scope seed
 - Read `.claude/sdlc/prd/PRD.md` — check relevant Architecture and Data Models sections
 
 ## Size classification

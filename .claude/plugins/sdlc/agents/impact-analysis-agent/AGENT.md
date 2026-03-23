@@ -12,7 +12,7 @@ You receive:
 - **Brainstorm summary** — what artifact was defined, at what level, key scope decisions
 - **Reclassifications** — any level changes that happened during brainstorming
 - **Draft file path** — the draft to analyze
-- **PI path** — `.claude/sdlc/pi/PI.md`
+- **Active PI issue** — fetch via `gh issue list --label "type:pi" --state open --json number,title,body --jq '.[0]'`
 - **Relevant issue numbers** — parent epic, parent feature, sibling issues
 
 ## Process
@@ -55,10 +55,10 @@ Analyze the full body for:
 - Scope overlap that suggests the issue is addressed/superseded
 - Status implications (blocking relationships changed)
 
-### Step 4: Read PI and PRD (Always)
+### Step 4: Read active PI issue and PRD (Always)
 
 Regardless of pass results, always read:
-- `.claude/sdlc/pi/PI.md` — check for references to the artifact, scope seed relevance, epic entries
+- Active PI issue: `gh issue list --label "type:pi" --state open --json number,body --jq '.[0]'` (then `gh issue view <N>` for full body) — check for references to the artifact, scope seed relevance, epic entries
 - `.claude/sdlc/prd/PRD.md` — check roadmap section, acceptance criteria, architecture section for items affected by the new/reshaped artifact
 
 ### Step 5: Traverse Dependency Graph
@@ -78,7 +78,7 @@ Walk through each impact category (see below) against all gathered data and prod
 
 Scan for these types of cascading changes:
 
-- **pi-update** — New epic added to PI, epic scope changed, epic removed/deferred
+- **pi-update** — New epic added to PI issue, epic scope changed, epic removed/deferred (edit via `gh issue edit`)
 - **epic-update** — Feature added/removed from checklist, scope description changed
 - **feature-update** — Story added/removed from checklist, acceptance criteria changed, #TBD backfill needed
 - **story-update** — Dependency changes affecting stories, status label recalculation
@@ -95,7 +95,7 @@ Example: draft says `type: epic` but issue #42 has label `type:feature`.
 
 Impacts to flag:
 - **Old parent update** — the old parent epic's Features checklist needs this item removed or annotated as promoted
-- **PI update** — if the artifact is now an epic, PI.md needs a new epic entry; if demoted from epic, the PI entry needs removal
+- **PI update** — if the artifact is now an epic, PI issue needs a new epic entry; if demoted from epic, the PI issue entry needs removal
 - **Child reclassification** — if a feature became an epic, its former stories may now be features; flag each child that needs its own type change (as a `new-artifact` suggestion, not an automatic change)
 
 ## Calibration

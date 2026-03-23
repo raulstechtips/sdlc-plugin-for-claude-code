@@ -149,17 +149,18 @@ gh issue edit <parent-epic> --body-file /tmp/sdlc-parent-body.md
 rm -f /tmp/sdlc-parent-body.md
 ```
 
-Also check PI.md for references to the old title:
-
-```
-Read .claude/sdlc/pi/PI.md
-```
-
-If PI.md references the old feature title, update it and commit:
+Also check the active PI issue for references to the old title:
 
 ```bash
-git add .claude/sdlc/pi/PI.md
-git commit -m "docs(pi): rename feature to <new title>"
+gh issue list --label "type:pi" --state open --json number,body --jq '.[0]'
+```
+
+If the PI issue body references the old feature title, update it:
+
+```bash
+PI_BODY=$(gh issue view <PI_NUM> --json body --jq '.body')
+UPDATED_BODY=$(echo "$PI_BODY" | sed "s/<old title>/<new title>/g")
+gh issue edit <PI_NUM> --body "$UPDATED_BODY"
 ```
 
 - **If priority changed**: flag child stories that inherit this priority.

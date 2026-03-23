@@ -80,24 +80,7 @@ BLOCKER_BODY=$(gh issue view <N> --json body --jq '.body')
 echo "$UPDATED_BLOCKER_BODY" | gh issue edit <N> --body-file -
 ```
 
-### 5. Update PI.md (if feature is listed there)
-
-Some PI plans list features explicitly under their epics. If `.claude/sdlc/pi/PI.md` has a `#TBD` next to this feature's name, replace it:
-
-```bash
-# Read PI.md, check if this feature's name appears with (#TBD)
-# If so, replace (#TBD) with (#<FEAT_NUM>)
-# Write back and commit
-```
-
-If PI.md was updated:
-
-```bash
-git add .claude/sdlc/pi/PI.md
-git commit -m "docs(pi): add issue number for feature <name> (#<FEAT_NUM>)"
-```
-
-### 6. Clean Up Temp Files
+### 5. Clean Up Temp Files
 
 ```bash
 rm -f /tmp/sdlc-feature-body.md
@@ -113,5 +96,3 @@ rm -f /tmp/sdlc-feature-body.md
 > **Updated:**
 > - Parent epic #`<parent-epic>` body: replaced `#TBD` with #`<FEAT_NUM>`
 > - Blocker #`<N>` body: added `Blocks: #<FEAT_NUM>` to Dependencies
-> - PI.md: replaced `#TBD` with #`<FEAT_NUM>` *(if applicable)*
-> - Committed: `docs(pi): add issue number for feature <name> (#<FEAT_NUM>)` *(if applicable)*
