@@ -103,7 +103,7 @@ gh label create "triage" --color "fbca04" --force
 Then for each area label from the PRD:
 
 ```bash
-gh label create "area:<name>" --color "7057ff" --force
+gh label create "area:<name>" --color "c2e0c6" --force
 ```
 
 Track counts: how many labels were newly created vs already existed. The `--force` flag means existing labels are silently updated (color only), so count the total attempted.
