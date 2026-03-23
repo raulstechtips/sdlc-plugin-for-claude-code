@@ -33,7 +33,11 @@ Following the established project pattern: templates are rigid output formats (s
 
 ## Templates
 
+Each template file starts with a preamble paragraph explaining what it is and how it's used, consistent with existing templates (story-template.md, feature-template.md, etc.).
+
 ### Bug Template (`templates/bug-template.md`)
+
+Preamble: "The canonical output format for Bug drafts. Bugs are GitHub Issues with `type:bug` label. Bugs are peers to the hierarchy — they have no parent epic or feature, only dependency relationships."
 
 ```yaml
 ---
@@ -48,14 +52,17 @@ status: draft
 
 Required sections:
 - `## Description` — What's broken, when/how it manifests, any error messages or symptoms
+- `## Reproduction Steps` — Steps to reproduce the bug (or "Not yet reproduced" with known context)
 - `## Expected vs Actual Behavior` — What should happen vs what does happen
 - `## Affected Areas` — Which parts of the system are impacted
 - `## File Scope` — Known files involved (may be partial at capture, filled by define)
 - `## Dependencies` — Bidirectional: `- Blocked by: #N` / `- Blocks: #N` (or `none`)
 
-No Parent section. Bugs are always peers to the hierarchy.
+No Parent section. Bugs are always peers to the hierarchy. Severity lives in frontmatter, not as a body section — it's structured metadata, not prose.
 
 ### Chore Template (`templates/chore-template.md`)
+
+Preamble: "The canonical output format for Chore drafts. Chores are GitHub Issues with `type:chore` label. Chores can be standalone (no parent) or parented to an epic/feature."
 
 ```yaml
 ---
@@ -84,6 +91,10 @@ Validation rules:
 - If neither parent is set, `## Parent` section MUST be omitted
 
 ### Triage Template (`templates/triage-template.md`)
+
+Preamble: "The canonical output format for Triage captures. Triage issues are raw intake — unsorted and unclassified. They get promoted to a real type via `sdlc:define`."
+
+**Label note:** The GitHub label for triage is `triage` (no `type:` prefix), unlike `type:bug` and `type:chore`. This matches the existing capture skill behavior. The frontmatter `type: triage` is for internal draft processing only.
 
 ```yaml
 ---
@@ -125,6 +136,35 @@ Internal checklist for the define skill, woven into natural conversation:
 - Read `.claude/sdlc/prd/PRD.md` — check Architecture and Security Constraints if relevant
 
 **Research agent:** For bugs with unclear scope — trace code paths, identify affected files, check test coverage, look for similar patterns.
+
+**Template reference:** `${CLAUDE_PLUGIN_ROOT}/templates/bug-template.md`
+
+**Note:** Bugs have no size/decomposition concept (unlike features with size:small/large). A bug is always a single unit of work.
+
+## Chore Brainstorm Handling
+
+Chores reuse `story-brainstorm.md` as specified in issue #18. However, the story guide's parent-related questions ("Which parent feature and epic does this belong to?") should be treated as conditional for chores — standalone chores skip these. Define's Phase 1 should note this when loading the story brainstorm guide for a chore.
+
+## Pre-Flight Checks for New Types
+
+Add to define's pre-flight checks table:
+
+| Level | Prerequisites |
+|-------|--------------|
+| Bug | PRD exists. No parent requirements — bugs are peers. |
+| Chore | PRD exists. If parented, parent epic/feature resolvable via `gh issue view`. |
+
+## Deviations from Issue #18 ACs
+
+These are deliberate design decisions from brainstorming, not oversights:
+
+| AC Specification | Design Decision | Rationale |
+|-----------------|-----------------|-----------|
+| Bug template has `Parent` section | No Parent section | Bugs are peers to the hierarchy — brainstormed and confirmed. Dependencies cover all bug-to-hierarchy relationships. |
+| `Expected Behavior` and `Actual Behavior` as separate sections | Merged into `Expected vs Actual Behavior` | These are always read together. One section with clear contrast is more useful than two tiny sections. |
+| `Severity` as a body section | Severity in frontmatter only | Severity is structured metadata (enum value), not prose. Frontmatter is the right place, consistent with how `priority` is handled. |
+
+The AC should be updated to reflect these decisions before implementation begins.
 
 ## Remaining ACs (Straightforward Implementation)
 
