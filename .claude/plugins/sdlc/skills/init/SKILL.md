@@ -115,13 +115,12 @@ Track counts: how many labels were newly created vs already existed. The `--forc
 ```bash
 mkdir -p .claude/sdlc/prd
 mkdir -p .claude/sdlc/drafts
-mkdir -p .claude/sdlc/retros
 ```
 
 Add `.gitkeep` files to any empty directories:
 
 ```bash
-for dir in .claude/sdlc/prd .claude/sdlc/drafts .claude/sdlc/retros; do
+for dir in .claude/sdlc/prd .claude/sdlc/drafts; do
   if [ -z "$(ls -A $dir 2>/dev/null)" ]; then
     touch "$dir/.gitkeep"
   fi
@@ -173,7 +172,6 @@ Compute label counts from the labels actually created in Step 3: count the unive
 **Directories:**
 - .claude/sdlc/prd/ ✓
 - .claude/sdlc/drafts/ ✓
-- .claude/sdlc/retros/ ✓
 
 **CLAUDE.md:** [references SDLC | needs SDLC sections — see suggestion above]
 

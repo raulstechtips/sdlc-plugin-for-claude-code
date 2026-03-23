@@ -10,7 +10,7 @@ I'm using the sdlc:reconcile skill to audit the issue hierarchy.
 **FIX LABELS, NOTHING ELSE**
 
 <HARD-GATE>
-Do NOT modify issue bodies, titles, or content. Only touch labels and open/closed state. If a fix requires content changes, flag it for sdlc:update.
+Do NOT modify issue bodies, titles, or content. Only touch labels and open/closed state. If a fix requires content changes, flag it for sdlc:define.
 </HARD-GATE>
 
 ## Process Flow
@@ -129,13 +129,16 @@ CRITICAL: Circular dependency — #52 → #48 → #52
 #### C2: Broken Hierarchy
 
 For each open issue with a `## Parent` section:
+- If the issue has the `type:pi` label → CRITICAL: PI issues cannot have parents
 - Extract the parent issue number
 - Check if that number exists in the fetched issue set (open or recently closed)
 - If the parent does NOT exist → broken hierarchy
-- If the parent's type label is inconsistent (e.g., story's parent is also a story instead of a feature) → broken hierarchy
+- If the issue has `type:bug` or `type:chore` label → validate parent exists and has a valid type (`type:epic` or `type:feature`) but do NOT enforce the strict hierarchy chain (e.g., do not require bug→feature→epic→PI)
+- Otherwise, if the parent's type label is inconsistent (e.g., story's parent is also a story instead of a feature) → broken hierarchy
 
 Record findings:
 ```
+CRITICAL: #10 (type:pi) has a ## Parent section — PI issues cannot have parents
 CRITICAL: #77 references parent #999 which does not exist
 CRITICAL: #55 (type:story) references parent #48 (type:story) — expected type:feature or type:epic
 ```
@@ -157,8 +160,9 @@ WARNING: #48 (closed) still has status:in-progress → fix to status:done
 
 #### W2: Completed Parents Not Closed
 
-For each **open** issue that has the `type:feature` or `type:epic` label:
+For each **open** issue that has the `type:feature`, `type:epic`, or `type:pi` label:
 - Look up `children_of[N]` from the map built in Step 1c
+- Children include issues with `type:bug` or `type:chore` that reference N as parent — an open bug/chore blocks auto-close just like an open story would
 - A parent is **complete** when ALL its children satisfy BOTH conditions:
   - Has `status:done` label, AND
   - Is in `CLOSED` state
@@ -220,7 +224,7 @@ INFO: #63 lists "Blocked by #61" but #61 does not list "Blocks #63"
 
 #### I2: Priority Mismatch
 
-For each open issue with a parent:
+For each open issue with a parent (skip issues with `type:bug` or `type:chore` — priority is independent of hierarchy for these types):
 - Extract the priority label of the child (e.g., `priority:critical`)
 - Extract the priority label of the parent
 - Priority rank: critical=1, high=2, medium=3, low=4, none=5
@@ -353,12 +357,12 @@ Do not retry failed commands. Surface them for the user to investigate.
 After Step 4 (or immediately after Step 3 if the user declined), list items that require manual action:
 
 **CRITICAL findings** (circular deps, broken hierarchy):
-> These require body edits to fix. Run `/sdlc:update` to repair the issue content.
+> These require body edits to fix. Run `/sdlc:define` to repair the issue content.
 > - #52 → #48 → #52 (circular dependency)
 > - #77 references nonexistent parent #999
 
 **INFO: Orphaned references:**
-> Run `/sdlc:update story #63` to add the missing `Blocks: #63` entry to #61.
+> Run `/sdlc:define story #63` to add the missing `Blocks: #63` entry to #61.
 
 **INFO: Priority mismatches and stale triage:**
 > These are informational. Use your judgment — no automated fix is available.
@@ -397,9 +401,11 @@ For every issue with `type:feature` label:
 
 ## Parent Completion Rule
 
-A parent issue (feature or epic) is **complete** when ALL of the following hold for every child issue:
+A parent issue (feature, epic, or PI) is **complete** when ALL of the following hold for every child issue:
 - The child has the `status:done` label, AND
 - The child is in `CLOSED` state
+
+Children include issues with `type:bug` or `type:chore` that reference the parent — an open bug/chore blocks auto-close just like any other open child.
 
 A parent with zero known children (no issues reference it as parent) is **not eligible** for auto-close.
 
@@ -415,12 +421,13 @@ Before finishing, verify all steps were completed:
 - [ ] Step 2 C1: Circular dependency DFS walk completed
 - [ ] Step 2 C2: Broken hierarchy checked for all issues with a `## Parent` section
 - [ ] Step 2 W1: Stale labels checked on all closed issues
-- [ ] Step 2 W2: Parent completion checked for all open features and epics
+- [ ] Step 2 W2: Parent completion checked for all open features, epics, and PI issues
 - [ ] Step 2 W3: Blocker mismatch checked for all open `status:todo` issues
 - [ ] Step 2 W4: Unblocked-but-blocked checked for all open `status:blocked` issues
 - [ ] Step 2 I1: Orphaned references checked across all open issues
 - [ ] Step 2 I2: Priority mismatch checked for all open issues with a parent
 - [ ] Step 2 I3: Stale triage checked against 14-day cutoff
+- [ ] Step 2 Check 8: Size label validation completed for all features and non-features
 - [ ] Step 3: Report presented and user asked "Apply WARNING fixes? [y/n]"
 - [ ] Step 4: Fixes executed (or skipped on "n")
 - [ ] Step 5: Unfixable items flagged with remediation instructions

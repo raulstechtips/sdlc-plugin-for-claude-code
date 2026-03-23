@@ -186,7 +186,7 @@ Informational guidance — no dispatching, no "want me to create?". Content is l
 | Level | Prerequisites |
 |-------|--------------|
 | PRD | Check if `.claude/sdlc/prd/PRD.md` exists (greenfield vs brownfield vs reshape) |
-| PI | PRD exists. Check for previous retros. Check for active PI issue via `gh issue list --label "type:pi" --state open`. |
+| PI | PRD exists. Check for previous closed PIs via `gh issue list --label "type:pi" --state closed`. Check for active PI issue via `gh issue list --label "type:pi" --state open`. |
 | Epic | PRD exists. PI exists. |
 | Feature | PRD exists. PI exists. Parent epic resolvable via `gh issue view`. |
 | Story | PRD exists. Parent feature and parent epic resolvable via `gh issue view`. |
