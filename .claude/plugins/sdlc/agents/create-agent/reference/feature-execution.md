@@ -39,7 +39,15 @@ FEAT_NUM=$(echo "$FEAT_URL" | grep -o '[0-9]*$')
 
 **Note:** Do NOT add a `status:` label to features. Status labels are for stories only.
 
-### 2. Update Parent Epic Body
+### 2. Create and Link Branch
+
+Follow [`branch-creation.md`](branch-creation.md) with:
+- `ISSUE_NUM` = `<FEAT_NUM>`
+- `ISSUE_TITLE` = `<name>`
+- `LEVEL` = `feature`
+- `PARENT_ISSUE` = `<parent-epic>` (from draft frontmatter field `parent-epic`)
+
+### 3. Update Parent Epic Body
 
 Read the parent epic's body and replace the `#TBD` placeholder next to this feature's name with the real feature issue number.
 
@@ -53,7 +61,7 @@ EPIC_BODY=$(gh issue view <parent-epic> --json body --jq '.body')
 echo "$UPDATED_EPIC_BODY" | gh issue edit <parent-epic> --body-file -
 ```
 
-### 3. Bidirectional Dependency Linking
+### 4. Bidirectional Dependency Linking
 
 If the feature draft has a `## Dependencies` section with `Blocked by: #N, #M`:
 
@@ -72,7 +80,7 @@ BLOCKER_BODY=$(gh issue view <N> --json body --jq '.body')
 echo "$UPDATED_BLOCKER_BODY" | gh issue edit <N> --body-file -
 ```
 
-### 4. Update PI.md (if feature is listed there)
+### 5. Update PI.md (if feature is listed there)
 
 Some PI plans list features explicitly under their epics. If `.claude/sdlc/pi/PI.md` has a `#TBD` next to this feature's name, replace it:
 
@@ -89,7 +97,7 @@ git add .claude/sdlc/pi/PI.md
 git commit -m "docs(pi): add issue number for feature <name> (#<FEAT_NUM>)"
 ```
 
-### 5. Clean Up Temp Files
+### 6. Clean Up Temp Files
 
 ```bash
 rm -f /tmp/sdlc-feature-body.md
@@ -100,6 +108,7 @@ rm -f /tmp/sdlc-feature-body.md
 > **Created:**
 > - Feature: #`<FEAT_NUM>` — "`<name>`"
 >   - Labels: `type:feature`, `priority:<priority>`, `size:<size>`, `area:<areas>`
+>   - Branch: `feature/<FEAT_NUM>-<slugified-name>` (linked to issue, branched from parent epic's branch)
 >
 > **Updated:**
 > - Parent epic #`<parent-epic>` body: replaced `#TBD` with #`<FEAT_NUM>`
