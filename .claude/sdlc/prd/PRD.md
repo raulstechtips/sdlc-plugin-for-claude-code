@@ -8,13 +8,13 @@ created: 2026-03-20
 
 SDLC Plugin for Claude Code is a Claude Code plugin that provides structured software development lifecycle management through collaborative brainstorming, GitHub Issues, and git-versioned artifacts. It enables developers to plan, decompose, execute, track, and retrospect on work using a hierarchical work-item model (PRD > PI > Epic > Feature > Story) with process discipline enforced through mandatory phases and hard gates.
 
-The plugin splits source of truth strategically: the PRD owns product requirements (git-versioned), the PI Plan owns sprint structure (git-versioned), and GitHub Issues own detailed work items with acceptance criteria, dependencies, and status tracking. All process metrics are derived from GitHub's Timeline API via label change events, enabling data-driven retrospectives.
+The plugin splits source of truth strategically: the PRD owns product requirements (git-versioned), and GitHub Issues own all planning and work artifacts — PI Plans, Epics, Features, and Stories — with acceptance criteria, dependencies, and status tracking. All process metrics are derived from GitHub's Timeline API via label change events, enabling data-driven retrospectives.
 
 ## Tech Stack
 
 - **Runtime:** Claude Code plugin system (markdown-based skills with YAML frontmatter)
 - **External CLI tools:** `gh` (GitHub CLI), `git`, `jq`, `bash`
-- **Artifact storage:** Git-versioned markdown files (PRD, PI) + GitHub Issues (Epic, Feature, Story)
+- **Artifact storage:** Git-versioned markdown files (PRD) + GitHub Issues (PI, Epic, Feature, Story)
 - **Metadata tracking:** GitHub Labels (status, priority, type, area, triage)
 - **Process metrics:** GitHub Timeline API (label change events, PR events)
 - **Plugin manifest:** `plugin.json` (name, description, version)
@@ -31,7 +31,7 @@ The plugin is a collection of 6 skills and 4 agents organized under `.claude/plu
 **Artifact hierarchy (top-down decomposition):**
 ```
 PRD (git: .claude/sdlc/prd/PRD.md)
-  └── PI Plan (git: .claude/sdlc/pi/PI.md)
+  └── PI Plan (GitHub Issue, type:pi label)
        └── Epic (GitHub Issue, type:epic)
             └── Feature (GitHub Issue, type:feature)
                  └── Story (GitHub Issue, type:story)
@@ -57,7 +57,7 @@ PRD (git: .claude/sdlc/prd/PRD.md)
 | Artifact | Storage | Key Fields |
 |----------|---------|-----------|
 | PRD | `.claude/sdlc/prd/PRD.md` (git) | name, version, created, Overview, Tech Stack, Architecture, Data Models, API Contracts, Security Constraints, Roadmap, Acceptance Criteria, Out of Scope, Label Taxonomy, Decision Log |
-| PI | `.claude/sdlc/pi/PI.md` (git, archived to `completed/PI-N.md`) | name, theme, started, target, Goals, Epics (with scope seeds), Dependencies, Worktree Strategy |
+| PI | GitHub Issue (`type:pi`) | name, theme, Timeline (started, target), Goals, Epics (with scope seeds and #TBD placeholders), Dependencies, Worktree Strategy |
 | Epic | GitHub Issue (`type:epic`) | title, Overview, Success Criteria, Features checklist, Non-goals, Dependencies |
 | Feature | GitHub Issue (`type:feature`) | title, Description, size (small/large), Acceptance Criteria, Stories checklist (if size:large), Non-goals, Dependencies, Parent Epic link |
 | Story | GitHub Issue (`type:story`) | title, Description, Acceptance Criteria, File Scope, Technical Notes, Dependencies, Parent Epic + Feature links |
@@ -66,7 +66,7 @@ PRD (git: .claude/sdlc/prd/PRD.md)
 
 | Category | Labels | Purpose |
 |----------|--------|---------|
-| Type | `type:epic`, `type:feature`, `type:story`, `type:spike`, `type:bug`, `type:chore` | Classify work item kind |
+| Type | `type:pi`, `type:epic`, `type:feature`, `type:story`, `type:spike`, `type:bug`, `type:chore` | Classify work item kind |
 | Status | `status:todo`, `status:in-progress`, `status:done`, `status:blocked` | Track workflow state |
 | Priority | `priority:critical`, `priority:high`, `priority:medium`, `priority:low` | Rank urgency |
 | Area | `area:skills`, `area:agents`, `area:templates`, `area:reference`, `area:manifest`, `area:artifacts`, `area:docs` | Group by architectural area |
@@ -98,6 +98,9 @@ The plugin interacts with external systems exclusively through CLI tools:
 | Operation | Command Pattern | Used By |
 |-----------|----------------|---------|
 | Create issue | `gh issue create --title "..." --body "..." --label "..."` | create |
+| Create PI issue | `gh issue create --label type:pi` | create (PI) |
+| Close PI issue | `gh issue close <number>` | create (PI archival) |
+| Edit PI issue | `gh issue edit <number> --body "..."` | update (PI) |
 | View issue | `gh issue view <number> --json title,body,labels,state` | define, update, status, reconcile |
 | Edit issue | `gh issue edit <number> --add-label/--remove-label/--body "..."` | update, reconcile |
 | List issues | `gh issue list --label "..." --state open --json number,title,labels` | status, reconcile, retro |
@@ -109,8 +112,7 @@ The plugin interacts with external systems exclusively through CLI tools:
 
 | Operation | Command Pattern | Used By |
 |-----------|----------------|---------|
-| Commit artifact | `git add <file> && git commit -m "..."` | create (PRD, PI) |
-| Tag PI completion | `git tag pi-N-complete` | create (PI archival) |
+| Commit artifact | `git add <file> && git commit -m "..."` | create (PRD) |
 | Read history | `git log --fixed-strings --grep="(#N)"` | retro |
 
 ## Security Constraints
@@ -173,7 +175,7 @@ sdlc:init (once) → sdlc:define (brainstorm + execute) → sdlc:status / sdlc:r
 | Date | Decision | Reason | Affects |
 |------|----------|--------|---------|
 | 2026-03-20 | Labels-only metadata (no GitHub Projects) | Project field changes don't appear in Timeline API, which would break retro metrics that depend on label change events | Architecture, Reconcile, Retro, Status |
-| 2026-03-20 | Git-versioned PRD and PI (not GitHub Issues) | PRD and PI are stable documents that benefit from version control, diffing, and archival — unlike work items which need GitHub's collaboration features | Architecture, Create, Update |
+| 2026-03-20 | ~~Git-versioned PRD and PI (not GitHub Issues)~~ | ~~PRD and PI are stable documents that benefit from version control, diffing, and archival — unlike work items which need GitHub's collaboration features~~ — **PI portion superseded** by PI-to-issue migration (see 2026-03-23) | Architecture, Create, Update |
 | 2026-03-20 | Bidirectional dependency linking | Enables reliable blocker detection and root-cause tracing in status/reconcile without needing to scan all issues | Data Models, Create, Update, Reconcile |
 | 2026-03-20 | Two-phase artifact workflow (define → create/update) | Separates creative brainstorming from execution, preventing half-formed artifacts from reaching GitHub | Architecture, Define, Create, Update |
 | 2026-03-20 | ~~Depth-based discovery (LIGHT/STANDARD/DEEP)~~ | ~~Prevents over-engineering simple artifacts~~ — **Superseded** by creative brainstorming (see below) | Define |
@@ -183,3 +185,4 @@ sdlc:init (once) → sdlc:define (brainstorm + execute) → sdlc:status / sdlc:r
 | 2026-03-21 | Size labels for features (size:small, size:large) | Visible classification of feature complexity enables better planning, validation, and reconciliation | Labels, Init, Reconcile, Feature Execution |
 | 2026-03-21 | Concrete area labels replacing placeholder | Area labels map to architectural zones of the plugin: skills, agents, templates, reference guides, manifests, runtime artifacts, and docs — chosen because work naturally clusters around these boundaries and each has a distinct change cadence | Labels, Init, Status, Reconcile |
 | 2026-03-22 | Define absorbs execution — create/update skills removed | Simpler workflow with fewer handoffs; define dispatches agents directly so artifacts get real issue numbers before impact analysis, eliminating the separate create/update skill invocation | Architecture, Skill Inventory, plugin.json, PI Goals |
+| 2026-03-23 | PI migrated from git file to GitHub Issue | Unifies artifact model, closes branch hierarchy gap (main → PI → epic → feature → story), enables epic stub creation during PI define | Architecture, Create, Update, Init, Status, Retro |
