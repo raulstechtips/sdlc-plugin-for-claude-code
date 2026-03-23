@@ -72,15 +72,27 @@ sdlc:create story
 ```
 Takes a stub story issue and adds the full detail: acceptance criteria, file scope, technical notes, verified dependencies.
 
+> **Note:** Each artifact gets a linked Git branch automatically during creation, branching from its parent's branch (or `main` for epics). Child stubs do not receive branches — they get branched when individually defined.
+
 ### Phase 3: Execute
 
 ```
 sdlc:status api
 ```
 
-Presents an ordered list of unblocked stories by priority (optionally filtered by area). Checks all dependencies, traces root blockers, identifies parallelization opportunities. You decide which story to pick up — the `status:in-progress` label transition is your responsibility.
+Presents an ordered list of unblocked stories by priority (optionally filtered by area). Checks all dependencies, traces root blockers, identifies parallelization opportunities.
 
-After completing a story, the agent creates a PR. Then run `sdlc:status` again for the next one.
+**Starting work on a story:**
+```
+sdlc:status              → pick a story
+claude -w                → spin up a worktree
+sdlc:setup-dev #130      → aligns worktree to the story's branch, sets status:in-progress
+                          → code, test, commit
+                          → create PR, close story
+sdlc:status              → next story
+```
+
+The `setup-dev` skill checks out the story's linked branch (created automatically during creation), or creates and links one if it doesn't exist yet. It also transitions the story to `status:in-progress`.
 
 ### Phase 4: Monitor & Adjust
 
@@ -146,6 +158,7 @@ Then run `sdlc:define pi` to start the next sprint.
 | `sdlc:reconcile` | Audit hierarchy, fix labels, validate deps |
 | `sdlc:capture` | Quick-capture idea as triage issue |
 | `sdlc:init` | Bootstrap labels, directories, and project setup |
+| `sdlc:setup-dev` | Align a worktree to an issue's branch and start work |
 
 ### Label Taxonomy
 
