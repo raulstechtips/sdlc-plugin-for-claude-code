@@ -104,7 +104,7 @@ Follow the procedure in [`branch-creation.md`](../../agents/create-agent/referen
 - `ISSUE_TITLE` — from Step 3
 - `LEVEL` — from Step 3
 - `PARENT_ISSUE` — from Step 3
-- `BASE_BRANCH` — *(bugs only)* from Step 3's interactive resolution. When provided, branch-creation skips its own parent resolution.
+- `BASE_BRANCH` — *(optional)* from Step 3's interactive prompt. When provided, branch-creation skips its own parent resolution.
 
 After branch creation, store the resulting branch name as `BRANCH_NAME`.
 
