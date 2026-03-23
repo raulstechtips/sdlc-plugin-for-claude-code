@@ -84,8 +84,10 @@ Rules: dash-prefixed, `#` prefix on issue numbers, comma-space separated, `none`
 
 ### Parent Completion Rules
 
+- PI closes when all Epics are `status:done`
 - Epic closes when all Features are `status:done`
 - Feature closes when all Stories are `status:done`
+- Open bugs/chores tied to a parent count as open children for completion purposes
 - Blocker is satisfied when issue is CLOSED or has `status:done`
 - Story with unmet blockers gets `status:blocked` (enforced by reconcile)
 
