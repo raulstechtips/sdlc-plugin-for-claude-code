@@ -17,8 +17,8 @@ Internal checklist for the define skill. Weave these into natural conversation â
 
 - Read `.claude/sdlc/prd/PRD.md` â€” especially Roadmap and Acceptance Criteria sections
 - Check `.claude/sdlc/retros/` for previous retrospectives
-- Check `.claude/sdlc/pi/completed/` for previous PI plans
-- Check if an active PI exists at `.claude/sdlc/pi/PI.md`
+- Check for previous PI plans: `gh issue list --label "type:pi" --state closed --json number,title`
+- Check for active PI: `gh issue list --label "type:pi" --state open --json number,title,body --jq '.[0]'`
 
 ## Template reference
 
