@@ -5,139 +5,124 @@
 ### Frontmatter
 - `name` — PI identifier (e.g., `PI-1`, `PI-2`)
 - `theme` — one-line theme description
-- `started` — date in YYYY-MM-DD format
-- `target` — date in YYYY-MM-DD format
+- `priority` — one of: `critical`, `high`, `medium`, `low`
+- `areas` — array of area labels (e.g., `[auth, api]`)
 
 ### Body Sections
 - `## Goals` — non-empty
-- `## Epics` — at least one epic listed
+- `## Timeline` — non-empty
+- `## Epics` — at least one `### Epic: <name> (#TBD)` subsection
 
 Additional sections (Dependency Graph, Worktree Strategy) are expected but not blocking.
 
 ## Execution Steps
 
-### Check for Active PI
-
-Before creating a new PI, check if one already exists:
+### 1. Check for Active PI
 
 ```bash
-test -f .claude/sdlc/pi/PI.md && echo "ACTIVE_PI_EXISTS" || echo "NO_ACTIVE_PI"
+ACTIVE_PI=$(gh issue list --label "type:pi" --state open --json number,title --jq '.[0]')
 ```
 
-If an active PI exists, run the **PI Archival Flow** first. If not, skip to **New PI Creation**.
+If `ACTIVE_PI` is non-empty, proceed to step 2. If empty, skip to step 3.
 
----
-
-### PI Archival Flow
-
-When an active PI exists at `.claude/sdlc/pi/PI.md`:
-
-**1. Read current PI:**
-
-```
-Read .claude/sdlc/pi/PI.md
-```
-
-Extract the PI number from the frontmatter `name` field (e.g., `PI-1` -> `1`).
-
-**2. Read the PRD decision log:**
-
-```
-Read .claude/sdlc/prd/PRD.md
-```
-
-Look for the `## Decision Log` section. Parse the table rows.
-
-**3. Bake decision log entries into the PRD body:**
-
-For each row in the Decision Log table:
-- Read the `Affects` column to identify which PRD section is affected.
-- Integrate the decision into the relevant section's content (e.g., if Affects says "Architecture", update the Architecture section prose to reflect the decision).
-- This makes decisions permanent — they graduate from the log into the body.
-
-**4. Wipe the decision log table:**
-
-Keep the table header row and separator, but remove all data rows:
-
-```markdown
-## Decision Log
-| Date | Decision | Reason | Affects |
-|------|----------|--------|---------|
-```
-
-**5. Bump PRD version:**
-
-Increment the minor version in PRD frontmatter (e.g., `1.2` -> `1.3`).
-
-**6. Commit PRD changes:**
+### 2. Close Active PI (if exists)
 
 ```bash
-git add .claude/sdlc/prd/PRD.md
-git commit -m "chore(prd): bump to v<X.Y> after PI-<N>"
+gh issue close <ACTIVE_PI_NUM>
 ```
 
-**7. Archive the PI file:**
+**Note:** Decision log baking into the PRD is deferred — it is not part of this flow.
+
+### 3. Create the PI Issue
+
+Strip the YAML frontmatter from the draft and write the body to a temp file, then create the issue:
 
 ```bash
-mkdir -p .claude/sdlc/pi/completed
+# Strip frontmatter from draft, write body to temp file
+# (everything after the closing --- of the frontmatter)
+
+cat <<'BODY' > /tmp/sdlc-pi-body.md
+<draft body content without frontmatter>
+BODY
+
+PI_URL=$(gh issue create \
+  --title "<name>" \
+  --body-file /tmp/sdlc-pi-body.md \
+  --label "type:pi" \
+  --label "priority:<priority>" \
+  --label "area:<area1>" \
+  --label "area:<area2>")
+PI_NUM=$(echo "$PI_URL" | grep -o '[0-9]*$')
 ```
 
-Copy PI.md to the archive, updating the frontmatter `status` from `active` to `completed`:
+**Note:** Do NOT add a `status:` label to PI issues. Status labels are for stories only.
 
-Write the archived content to `.claude/sdlc/pi/completed/PI-<N>.md` with `status: completed` in the frontmatter.
+### 4. Create and Link Branch
 
-**8. Commit PI archive:**
+Follow [`branch-creation.md`](branch-creation.md) with:
+- `ISSUE_NUM` = `<PI_NUM>`
+- `ISSUE_TITLE` = `<name>`
+- `LEVEL` = `pi`
+- `PARENT_ISSUE` = `none`
+
+### 5. Create Epic Stubs
+
+For each `### Epic: <name> (#TBD)` subsection in the PI draft's `## Epics` section, create a stub issue:
 
 ```bash
-git add .claude/sdlc/pi/
-git commit -m "chore(pi): close PI-<N>"
+cat <<'BODY' > /tmp/sdlc-epic-stub-body.md
+## Overview
+
+**Goal:** <goal from PI epic subsection>
+
+**Scope seeds:**
+<scope seeds from PI epic subsection>
+
+## Parent
+
+PI: #<PI_NUM>
+BODY
+
+EPIC_URL=$(gh issue create \
+  --title "<epic name>" \
+  --body-file /tmp/sdlc-epic-stub-body.md \
+  --label "type:epic" \
+  --label "priority:<priority from PI epic subsection>")
+EPIC_NUM=$(echo "$EPIC_URL" | grep -o '[0-9]*$')
 ```
 
-**9. Tag the completion:**
+**Note:** No branch is created for stubs. No status label.
+
+### 6. Backfill PI Body
+
+For each created epic stub, replace the `(#TBD)` placeholder in the PI issue body with the real epic number:
 
 ```bash
-git tag pi-<N>-complete
+PI_BODY=$(gh issue view <PI_NUM> --json body --jq '.body')
+UPDATED_BODY=$(echo "$PI_BODY" | sed "s/### Epic: <EPIC_NAME> (#TBD)/### Epic: <EPIC_NAME> (#<EPIC_NUM>)/")
+gh issue edit <PI_NUM> --body "$UPDATED_BODY"
 ```
 
-Where `<N>` is the PI number (lowercase, e.g., `pi-1-complete`).
+Repeat for each epic stub created in step 5.
 
----
-
-### New PI Creation
-
-**1. Ensure directory exists:**
+### 7. Clean Up Temp Files
 
 ```bash
-mkdir -p .claude/sdlc/pi
+rm -f /tmp/sdlc-pi-body.md /tmp/sdlc-epic-stub-body.md
 ```
-
-**2. Write draft content to final location:**
-
-Write the validated draft content to `.claude/sdlc/pi/PI.md`. Update the frontmatter: change `status: draft` to `status: active`.
-
-**3. Commit:**
-
-```bash
-git add .claude/sdlc/pi/PI.md
-git commit -m "docs(pi): create PI-<N> plan"
-```
-
-Where `<N>` is the PI number from the frontmatter name field.
 
 ## Report Format
 
-**New PI (no archival):**
-
-> Created: `.claude/sdlc/pi/PI.md` — PI-`<N>`: "`<theme>`"
-> Committed: `docs(pi): create PI-<N> plan`
-
-**New PI (with archival):**
-
-> **Archived PI-`<old-N>`:**
-> - PRD updated: baked `<count>` decisions, bumped to v`<X.Y>`
-> - Archived to: `.claude/sdlc/pi/completed/PI-<old-N>.md`
-> - Tagged: `pi-<old-N>-complete`
+> **Created:**
+> - PI: #`<PI_NUM>` — "`<name>`"
+>   - Labels: `type:pi`, `priority:<priority>`, `area:<areas>`
+>   - Branch: `pi/<PI_NUM>-<slugified-name>` (linked to issue)
+> - Epic stubs:
+>   - #`<EPIC1_NUM>` — "`<epic1 name>`"
+>   - #`<EPIC2_NUM>` — "`<epic2 name>`"
 >
-> **Created PI-`<new-N>`:**
-> - `.claude/sdlc/pi/PI.md` — "`<theme>`"
-> - Committed: `docs(pi): create PI-<new-N> plan`
+> **Updated:**
+> - PI #`<PI_NUM>` body: replaced `#TBD` with real epic numbers
+>
+> **Closed:** (if applicable)
+> - PI #`<OLD_PI_NUM>` — "`<old PI name>`"
