@@ -35,9 +35,9 @@ gh issue list --state open --json number,title,labels --limit 200
 ```
 
 From this list, identify **candidates** worth deep-reading. An issue is a candidate if ANY of these are true:
-- Shares an area label with the draft (e.g., draft has `area:skills`, issue has `area:skills`)
 - Is referenced in the draft's Dependencies section (`Blocked by` or `Blocks`)
 - Is a parent, child, or sibling of the draft's artifact (same parent epic/feature)
+- Shares an area label with the draft (e.g., draft has `area:skills`, issue has `area:skills`)
 - Title contains keywords that overlap with the draft's description or name
 - Has `triage` label (might be addressed or superseded by the new artifact)
 
@@ -64,7 +64,7 @@ Regardless of pass results, always read:
 ### Step 5: Traverse Dependency Graph
 
 For each issue number found in the draft's Dependencies section:
-1. Read the referenced issue's body (if not already read in Pass 2)
+1. Read the referenced issue's body. If already read during Pass 2, reuse that data — do not re-fetch.
 2. Check if its `Blocks:` or `Blocked by:` line needs updating to include the new artifact
 3. If the referenced issue itself has dependencies, check **one level deep** for transitive impacts (e.g., unblocking a chain)
 
