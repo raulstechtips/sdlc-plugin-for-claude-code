@@ -1,6 +1,6 @@
 # PR Body Template
 
-Reference template for finish-dev PR bodies. Claude populates each section with real content — do not use placeholder text.
+Reference template for finish-dev PR bodies. Claude populates each section with real content — do not use placeholder text. The Child Issues section is only included when the issue has children.
 
 ## Structure
 
@@ -37,8 +37,8 @@ Closes #<ISSUE_NUM>
 ### Summary
 Describe the aggregate outcome — what does merging this branch deliver? Do not list individual child PRs. Focus on the capability or milestone this completes.
 
-### Child Issues
-List every child issue from the parent's checklist section (`## Stories` for large features, `## Features` for epics, `## Epics` for PIs). Include issue number and title for each.
+### Child Issues (conditional)
+Only include this section if the issue has child issues listed in its body (`## Stories` for features, `## Features` for epics). Include issue number and title for each. Omit the entire section for issues without children (stories, bugs, chores).
 
 ### Test Plan
 Read the actual diff and issue context. Include:
