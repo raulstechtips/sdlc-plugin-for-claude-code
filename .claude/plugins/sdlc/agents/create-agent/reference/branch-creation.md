@@ -10,13 +10,39 @@ Shared reference for creating and linking a Git branch to a GitHub Issue. Used b
 | `ISSUE_TITLE` | The issue title (used to generate the branch name slug) |
 | `LEVEL` | Artifact level: `pi`, `epic`, `feature`, `story`, `chore`, or `bug` |
 | `PARENT_ISSUE` | Parent issue number, or `none` (for PI, or when no parent exists) |
-| `BASE_BRANCH` | *(Optional)* Pre-resolved base branch name. If provided, skip Step 1 (parent resolution). Used by setup-dev's interactive prompt. |
+| `BASE_BRANCH` | *(Optional)* Pre-resolved base branch name. If provided, skip Step 2 (parent resolution). Used by setup-dev's interactive prompt. |
 
-## Step 1: Resolve Parent Branch
+## Outputs
 
-If `BASE_BRANCH` is already provided (e.g., from setup-dev's interactive prompt), skip this step entirely — go directly to Step 2.
+| Variable | Description |
+|----------|-------------|
+| `BRANCH_NAME` | The branch name — either the pre-existing linked branch or the newly created one. Callers should use this for checkout and reporting. |
 
-If `PARENT_ISSUE` is `none`, set `BASE_BRANCH=main` and skip to Step 2.
+## Step 1: Pre-flight — Check for Existing Branch
+
+```bash
+gh issue develop <ISSUE_NUM> --list
+```
+
+- **One branch found** — set `BRANCH_NAME` to the listed branch name, report:
+
+  > "Branch `<BRANCH_NAME>` is already linked to #`<ISSUE_NUM>`. Skipping creation."
+
+  **Skip Steps 2–4 entirely.** Return `BRANCH_NAME` to the caller.
+
+- **Multiple branches found** — set `BRANCH_NAME` to the first listed branch, report:
+
+  > "Multiple branches are already linked to #`<ISSUE_NUM>`: `<branch1>`, `<branch2>`. Using `<branch1>`."
+
+  **Skip Steps 2–4 entirely.** Return `BRANCH_NAME` to the caller.
+
+- **No branch found** — proceed to Step 2.
+
+## Step 2: Resolve Parent Branch
+
+If `BASE_BRANCH` is already provided (e.g., from setup-dev's interactive prompt), skip this step entirely — go directly to Step 3.
+
+If `PARENT_ISSUE` is `none`, set `BASE_BRANCH=main` and skip to Step 3.
 
 Otherwise, query the parent issue's linked branches:
 
@@ -30,7 +56,7 @@ Three cases:
 - **Exactly one branch** — `BASE_BRANCH=<that branch name>`
 - **Multiple branches** — Present the list to the user and ask which branch to use. Set `BASE_BRANCH` to their selection.
 
-## Step 2: Create and Link Branch
+## Step 3: Create and Link Branch
 
 Slugify the issue title:
 - Lowercase the entire title
@@ -48,7 +74,7 @@ gh issue develop <ISSUE_NUM> \
 
 If `gh issue develop` fails because a branch with that name already exists but is not linked to this issue, surface the error to the user and suggest either renaming or manually linking the existing branch.
 
-## Step 3: Verify
+## Step 4: Verify
 
 ```bash
 gh issue develop <ISSUE_NUM> --list
