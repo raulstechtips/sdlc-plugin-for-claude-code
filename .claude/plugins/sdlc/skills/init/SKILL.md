@@ -92,9 +92,9 @@ gh label create "priority:high" --color "d93f0b" --force
 gh label create "priority:medium" --color "fbca04" --force
 gh label create "priority:low" --color "c5def5" --force
 
-# Size labels (yellow-green)
+# Size labels (yellow-green gradient: lighter = smaller)
 gh label create "size:small" --color "e4e669" --force
-gh label create "size:large" --color "e4e669" --force
+gh label create "size:large" --color "c9c642" --force
 
 # Triage (yellow)
 gh label create "triage" --color "fbca04" --force
