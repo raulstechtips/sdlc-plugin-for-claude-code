@@ -2,7 +2,7 @@
 name: define
 description: Use when defining new SDLC artifacts (PRD, PI, epic, feature, story, bug, chore) or reshaping existing ones through collaborative brainstorming that produces a reviewable local draft.
 allowed-tools: Read, Edit, Write, Bash, Grep, Glob, Agent
-argument-hint: "[level] [identifier]"
+argument-hint: "[level] [#N]"
 ---
 
 I'm using the sdlc:define skill to define/reshape an SDLC artifact.
@@ -39,11 +39,19 @@ Parse `$ARGUMENTS` for an optional level and optional identifier.
 - Read `.claude/sdlc/prd/PRD.md` for project context
 - Check for active PI issue: `gh issue list --label "type:pi" --state open --json number,title,body --jq '.[0]'`
 - Check pre-flight requirements (see Pre-Flight Checks below)
-- Detect new vs reshape: issue number in args = reshape; "reshape/rethink/revise/update" keywords = reshape; existing draft in drafts dir = ask user
-- If args contain only an issue number (#N) with no level keyword: check the issue's labels via `gh issue view <N> --json labels`:
+- Detect new vs reshape:
+  - **Issue number in args** → fetch the issue via `gh issue view <N> --json title,body,labels`. Then assess the body content:
+    - Read the body and judge whether this is a **fully-defined artifact** (structured template sections filled with substantive content) or a **stub/incomplete issue** (minimal body, missing template sections, placeholder text like `[TBD]`, or just a short description with parent links).
+    - Present your assessment to the user: "This issue looks like [a stub that needs first-time definition / a well-defined artifact — would you like to reshape it?]"
+    - Route based on the user's confirmation: first-time definition → treat as **new**; reshape → treat as **reshape**.
+    - Use your own judgment on content completeness — no fixed heuristic rules. The user confirmation is the safety net.
+  - **Existing draft** in `.claude/sdlc/drafts/` dir for this artifact (check after the issue assessment above, if applicable) = ask user whether to resume the draft or start fresh
+  - **No issue number and no existing draft** = new artifact
+- If args contain an issue number (#N) with no level keyword: infer level from the fetched issue's labels (reuse the `gh issue view` result from above):
   - Has `type:bug` label → set level to `bug`, load `bug-brainstorm.md` (via the generic rule)
   - Has `type:chore` label → set level to `chore`, load `story-brainstorm.md` (via the chore exception)
   - Has `triage` label → ask the user what level this should become (may be feature, story, bug, or chore)
+  - Has any other `type:*` label (e.g., `type:feature`, `type:epic`, `type:story`, `type:pi`) → infer level from the label name, load the corresponding brainstorm guide
 
 ### Phase 2: Creative Brainstorming
 
@@ -85,7 +93,7 @@ Wait for the user's choice before proceeding.
 
 Load the template from `${CLAUDE_PLUGIN_ROOT}/templates/<level>-template.md`. Pour everything from the brainstorm into the rigid format. Structured, consistent output every time.
 
-Write to `.claude/sdlc/drafts/<level>-<name>.md` (new) or `.claude/sdlc/drafts/<level>-<issue-number>.md` (reshape). Ensure the drafts directory exists.
+Write to `.claude/sdlc/drafts/<level>-<name>.md` (new, no issue number) or `.claude/sdlc/drafts/<level>-<issue-number>.md` (reshape, or new from a stub with a known issue number). Ensure the drafts directory exists.
 
 For reshapes, include a `## Changes` section at the end:
 
