@@ -13,7 +13,7 @@
 - `## Success Criteria` — at least one checkbox item
 - `## Features` — at least one checklist item with `(#TBD)` placeholder
 
-Additional sections (Non-goals, Dependencies) are expected but not blocking.
+Additional sections (Non-goals, Technical Notes, Dependencies) are expected but not blocking.
 
 ## Execution Steps
 

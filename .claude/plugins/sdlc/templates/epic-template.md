@@ -21,5 +21,6 @@ status: draft
 - `## Success Criteria` — Checklist of measurable conditions for "done"
 - `## Features` — Checklist of features with `(#TBD)` placeholders for issue numbers
 - `## Non-goals` — Explicit exclusions
+- `## Technical Notes` — Architectural decisions, cross-cutting constraints, and technical approach that child features should build on
 - `## Dependencies` — Bidirectional format: `- Blocked by: #N` / `- Blocks: #N` (or `none`)
 - `## Parent` — `PI: #<N>` (links to parent PI issue)

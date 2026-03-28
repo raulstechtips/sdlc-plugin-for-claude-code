@@ -10,6 +10,7 @@ Internal checklist for the define skill. Weave these into natural conversation â
 - What's the priority relative to other epics?
 - Any dependencies on other epics?
 - What areas of the codebase does this touch?
+- What architectural decisions, cross-cutting constraints, or technical approach should child features build on?
 
 ## Context to load
 
