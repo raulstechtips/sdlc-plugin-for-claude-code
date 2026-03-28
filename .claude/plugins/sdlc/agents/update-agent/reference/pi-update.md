@@ -17,6 +17,16 @@
 
 ## Edit Pattern
 
+### Step 0: Ensure Branch Exists
+
+Follow [`branch-creation.md`](../create-agent/reference/branch-creation.md) with:
+- `ISSUE_NUM` = `<N>` (the issue being updated)
+- `ISSUE_TITLE` = `<current issue title>`
+- `LEVEL` = `pi`
+- `PARENT_ISSUE` = `none`
+
+This is idempotent — if a branch is already linked, this step is a no-op.
+
 ### Read current PI
 
 ```bash

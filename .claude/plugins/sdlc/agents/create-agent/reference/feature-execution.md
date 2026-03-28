@@ -15,6 +15,10 @@
 
 Additional sections (Non-goals, Dependencies, Parent) are expected but not blocking.
 
+## Stub Mode
+
+If dispatched with `stub: true`, skip Step 2 (Create and Link Branch). All other steps execute normally.
+
 ## Execution Steps
 
 ### 1. Create the Feature Issue
@@ -91,7 +95,7 @@ rm -f /tmp/sdlc-feature-body.md
 > **Created:**
 > - Feature: #`<FEAT_NUM>` — "`<name>`"
 >   - Labels: `type:feature`, `priority:<priority>`, `size:<size>`, `area:<areas>`
->   - Branch: `feature/<FEAT_NUM>-<slugified-name>` (linked to issue, branched from parent epic's branch)
+>   - Branch: `feature/<FEAT_NUM>-<slugified-name>` (linked to issue, branched from parent epic's branch) — omit if stub mode
 >
 > **Updated:**
 > - Parent epic #`<parent-epic>` body: replaced `#TBD` with #`<FEAT_NUM>`
