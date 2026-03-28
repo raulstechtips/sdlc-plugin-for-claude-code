@@ -35,26 +35,29 @@ gh issue close <ACTIVE_PI_NUM>
 
 ### 3. Create the PI Issue
 
-Strip the YAML frontmatter from the draft and write the body to a temp file, then create the issue:
+Strip the YAML frontmatter from the draft and write the body to a temp file, then create the issue.
+
+Slugify the PI name for the temp file path — lowercase, replace non-alphanumeric characters with hyphens, collapse consecutive hyphens, strip leading/trailing hyphens.
 
 ```bash
 # Strip frontmatter from draft, write body to temp file
 # (everything after the closing --- of the frontmatter)
+# SLUG = slugified <name> (e.g., "PI-2: Core Platform" -> "pi-2-core-platform")
 
-cat <<'BODY' > /tmp/sdlc-pi-body.md
+cat <<'BODY' > /tmp/sdlc-pi-<SLUG>-body.md
 <draft body content without frontmatter>
 BODY
 
 PI_URL=$(gh issue create \
   --title "<name>" \
-  --body-file /tmp/sdlc-pi-body.md \
+  --body-file /tmp/sdlc-pi-<SLUG>-body.md \
   --label "type:pi" \
   --label "priority:<priority>" \
   --label "area:<area1>" \
   --label "area:<area2>")
 PI_NUM=$(echo "$PI_URL" | grep -o '[0-9]*$')
 
-rm -f /tmp/sdlc-pi-body.md
+rm -f /tmp/sdlc-pi-<SLUG>-body.md
 ```
 
 **Note:** Do NOT add a `status:` label to PI issues. Status labels are for stories only.

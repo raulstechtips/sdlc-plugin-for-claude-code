@@ -15,7 +15,9 @@
 - 3+ fields changing
 - Goal rewrite
 
-## Edit Pattern
+## Read-Modify-Write Pattern
+
+**The `gh issue edit --body` flag replaces the ENTIRE body.** There is no partial edit. Always use the read-modify-write pattern.
 
 ### Step 0: Ensure Branch Exists
 
@@ -27,59 +29,52 @@ Follow [`branch-creation.md`](../create-agent/reference/branch-creation.md) with
 
 This is idempotent — if a branch is already linked, this step is a no-op.
 
-### Read current PI
+### Step 1: Read current body
+
+Slugify the current issue title for the temp file path — lowercase, replace non-alphanumeric characters with hyphens, collapse consecutive hyphens, strip leading/trailing hyphens.
 
 ```bash
-gh issue view <N> --json body,title,labels
+gh issue view <N> --json body --jq '.body' > /tmp/sdlc-pi-<N>-<SLUG>-body.md
 ```
 
-### Make targeted edits
-
-Extract the `body` field, apply string manipulation to modify only the targeted content, then write it back. Do NOT rewrite the entire body — change only the targeted section.
-
-### Common direct updates
-
-**Date change:**
-Update the `started` or `target` field in the metadata section of the body, then:
+Also read the full issue metadata for context:
 
 ```bash
-gh issue edit <N> --body "$UPDATED_BODY"
+gh issue view <N> --json number,title,body,labels,state
 ```
 
-**Theme tweak:**
-Update the `theme` field in the metadata section of the body, then:
+### Step 2: Modify the specific section
+
+Read `/tmp/sdlc-pi-<N>-<SLUG>-body.md`, identify the section to change, and modify ONLY that section.
+
+Common sections in a PI body:
+- `## Goals` — objectives for the increment
+- `## Timeline` — start/target dates
+- `## Epics` — child epic subsections with status annotations
+
+### Step 3: Write back the full updated body
 
 ```bash
-gh issue edit <N> --body "$UPDATED_BODY"
+gh issue edit <N> --body-file /tmp/sdlc-pi-<N>-<SLUG>-body.md
 ```
 
-**Status update for an epic entry:**
-Find the epic line in the `## Epics` section of the body, update its status annotation, then:
-
-```bash
-gh issue edit <N> --body "$UPDATED_BODY"
-```
-
-**Single epic/feature rename:**
-Find the line referencing the old name, replace it with the new name (keeping the issue number reference intact), then:
-
-```bash
-gh issue edit <N> --body "$UPDATED_BODY"
-```
-
-**Title change:**
+### Title Changes
 
 ```bash
 gh issue edit <N> --title "<new title>"
 ```
 
-**Label change:**
+### Label Changes
 
 ```bash
 gh issue edit <N> --add-label "<label>" --remove-label "<label>"
 ```
 
-Use a descriptive description of what changed: `gh issue edit <N> --body "$UPDATED_BODY"` extending the target date, or renaming an epic entry.
+### Clean Up
+
+```bash
+rm -f /tmp/sdlc-pi-<N>-<SLUG>-body.md
+```
 
 ## Cascade Rules
 
