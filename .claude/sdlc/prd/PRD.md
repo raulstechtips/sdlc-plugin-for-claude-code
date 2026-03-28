@@ -60,8 +60,8 @@ PRD (git: .claude/sdlc/prd/PRD.md)
 |----------|---------|-----------|
 | PRD | `.claude/sdlc/prd/PRD.md` (git) | name, version, created, Overview, Tech Stack, Architecture, Data Models, API Contracts, Security Constraints, Roadmap, Acceptance Criteria, Out of Scope, Label Taxonomy, Decision Log |
 | PI | GitHub Issue (`type:pi`) | name, theme, Timeline (started, target), Goals, Epics (with scope seeds and #TBD placeholders), Dependencies, Worktree Strategy |
-| Epic | GitHub Issue (`type:epic`) | title, Overview, Success Criteria, Features checklist, Non-goals, Dependencies |
-| Feature | GitHub Issue (`type:feature`) | title, Description, size (small/large), Acceptance Criteria, Stories checklist (if size:large), Non-goals, Dependencies, Parent Epic link |
+| Epic | GitHub Issue (`type:epic`) | title, Overview, Success Criteria, Features checklist, Non-goals, Technical Notes, Dependencies |
+| Feature | GitHub Issue (`type:feature`) | title, Description, size (small/large), Acceptance Criteria, Stories checklist (if size:large), Non-goals, Technical Notes, Dependencies, Parent Epic link |
 | Story | GitHub Issue (`type:story`) | title, Description, Acceptance Criteria, File Scope, Technical Notes, Dependencies, Parent Epic + Feature links |
 
 ### Label Taxonomy

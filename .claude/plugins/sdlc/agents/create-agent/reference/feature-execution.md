@@ -13,7 +13,7 @@
 - `## Description` — non-empty
 - `## Stories` — **only if `size: large`**: at least one checklist item with `(#TBD)` placeholder. **Must NOT exist if `size: small`.**
 
-Additional sections (Non-goals, Dependencies, Parent) are expected but not blocking.
+Additional sections (Non-goals, Technical Notes, File Scope, Dependencies, Parent) are expected but not blocking.
 
 ## Execution Steps
 
