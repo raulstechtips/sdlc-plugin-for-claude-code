@@ -23,16 +23,20 @@ If dispatched with `stub: true`, skip Step 2 (Create and Link Branch). All other
 
 ### 1. Create the Feature Issue
 
-Write the draft body (without YAML frontmatter) to a temp file and create the issue:
+Write the draft body (without YAML frontmatter) to a temp file and create the issue.
+
+Slugify the feature name for the temp file path — lowercase, replace non-alphanumeric characters with hyphens, collapse consecutive hyphens, strip leading/trailing hyphens.
 
 ```bash
-cat <<'BODY' > /tmp/sdlc-feature-body.md
+# SLUG = slugified <name> (e.g., "Execution Reliability" -> "execution-reliability")
+
+cat <<'BODY' > /tmp/sdlc-feature-<SLUG>-body.md
 <draft body content without frontmatter>
 BODY
 
 FEAT_URL=$(gh issue create \
   --title "<name>" \
-  --body-file /tmp/sdlc-feature-body.md \
+  --body-file /tmp/sdlc-feature-<SLUG>-body.md \
   --label "type:feature" \
   --label "priority:<priority>" \
   --label "size:<size>" \
@@ -87,7 +91,7 @@ echo "$UPDATED_BLOCKER_BODY" | gh issue edit <N> --body-file -
 ### 5. Clean Up Temp Files
 
 ```bash
-rm -f /tmp/sdlc-feature-body.md
+rm -f /tmp/sdlc-feature-<SLUG>-body.md
 ```
 
 ## Report Format

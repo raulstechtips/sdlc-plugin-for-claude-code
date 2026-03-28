@@ -40,16 +40,20 @@ Store the determined status for use in step 2.
 
 ### 2. Create the Story Issue
 
-Write the draft body (without YAML frontmatter) to a temp file and create the issue with the full set of labels:
+Write the draft body (without YAML frontmatter) to a temp file and create the issue with the full set of labels.
+
+Slugify the story name for the temp file path — lowercase, replace non-alphanumeric characters with hyphens, collapse consecutive hyphens, strip leading/trailing hyphens.
 
 ```bash
-cat <<'BODY' > /tmp/sdlc-story-body.md
+# SLUG = slugified <name> (e.g., "Fix temp file collision" -> "fix-temp-file-collision")
+
+cat <<'BODY' > /tmp/sdlc-story-<SLUG>-body.md
 <draft body content without frontmatter>
 BODY
 
 STORY_URL=$(gh issue create \
   --title "<name>" \
-  --body-file /tmp/sdlc-story-body.md \
+  --body-file /tmp/sdlc-story-<SLUG>-body.md \
   --label "type:story" \
   --label "priority:<priority>" \
   --label "area:<area1>" \
@@ -106,7 +110,7 @@ echo "$UPDATED_BLOCKER_BODY" | gh issue edit <N> --body-file -
 ### 5. Clean Up Temp Files
 
 ```bash
-rm -f /tmp/sdlc-story-body.md
+rm -f /tmp/sdlc-story-<SLUG>-body.md
 ```
 
 **Note:** Stories never get branches at creation time. Use `/sdlc:setup-dev` to create a story branch when development begins.
