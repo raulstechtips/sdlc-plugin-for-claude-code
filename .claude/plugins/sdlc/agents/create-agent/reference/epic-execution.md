@@ -15,6 +15,10 @@
 
 Additional sections (Non-goals, Technical Notes, Dependencies) are expected but not blocking.
 
+## Stub Mode
+
+If dispatched with `stub: true`, skip Step 2 (Create and Link Branch). All other steps execute normally.
+
 ## Execution Steps
 
 ### 1. Create the Epic Issue
@@ -89,7 +93,7 @@ rm -f /tmp/sdlc-epic-body.md
 > **Created:**
 > - Epic: #`<EPIC_NUM>` — "`<name>`"
 >   - Labels: `type:epic`, `priority:<priority>`, `area:<areas>`
->   - Branch: `epic/<EPIC_NUM>-<slugified-name>` (linked to issue)
+>   - Branch: `epic/<EPIC_NUM>-<slugified-name>` (linked to issue) — omit if stub mode
 >
 > **Updated:**
 > - Blocker #`<N>` body: added `Blocks: #<EPIC_NUM>` to Dependencies

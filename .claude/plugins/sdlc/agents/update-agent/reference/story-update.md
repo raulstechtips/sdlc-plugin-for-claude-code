@@ -15,6 +15,8 @@
 - 3+ fields changing
 - Story needs to be split
 
+Stories do not have branches created by the update agent. Use `/sdlc:setup-dev` to create a story branch.
+
 ## Read-Modify-Write Pattern
 
 **The `gh issue edit --body` flag replaces the ENTIRE body.** There is no partial edit. Always use the read-modify-write pattern.

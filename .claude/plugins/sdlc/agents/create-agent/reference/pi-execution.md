@@ -53,6 +53,8 @@ PI_URL=$(gh issue create \
   --label "area:<area1>" \
   --label "area:<area2>")
 PI_NUM=$(echo "$PI_URL" | grep -o '[0-9]*$')
+
+rm -f /tmp/sdlc-pi-body.md
 ```
 
 **Note:** Do NOT add a `status:` label to PI issues. Status labels are for stories only.
@@ -65,64 +67,12 @@ Follow [`branch-creation.md`](branch-creation.md) with:
 - `LEVEL` = `pi`
 - `PARENT_ISSUE` = `none`
 
-### 5. Create Epic Stubs
-
-For each `### Epic: <name> (#TBD)` subsection in the PI draft's `## Epics` section, create a stub issue:
-
-```bash
-cat <<'BODY' > /tmp/sdlc-epic-stub-body.md
-## Overview
-
-**Goal:** <goal from PI epic subsection>
-
-**Scope seeds:**
-<scope seeds from PI epic subsection>
-
-## Parent
-
-PI: #<PI_NUM>
-BODY
-
-EPIC_URL=$(gh issue create \
-  --title "<epic name>" \
-  --body-file /tmp/sdlc-epic-stub-body.md \
-  --label "type:epic" \
-  --label "priority:<priority from PI epic subsection>")
-EPIC_NUM=$(echo "$EPIC_URL" | grep -o '[0-9]*$')
-```
-
-**Note:** No branch is created for stubs. No status label.
-
-### 6. Backfill PI Body
-
-For each created epic stub, replace the `(#TBD)` placeholder in the PI issue body with the real epic number:
-
-```bash
-PI_BODY=$(gh issue view <PI_NUM> --json body --jq '.body')
-UPDATED_BODY=$(echo "$PI_BODY" | sed "s/### Epic: <EPIC_NAME> (#TBD)/### Epic: <EPIC_NAME> (#<EPIC_NUM>)/")
-gh issue edit <PI_NUM> --body "$UPDATED_BODY"
-```
-
-Repeat for each epic stub created in step 5.
-
-### 7. Clean Up Temp Files
-
-```bash
-rm -f /tmp/sdlc-pi-body.md /tmp/sdlc-epic-stub-body.md
-```
-
 ## Report Format
 
 > **Created:**
 > - PI: #`<PI_NUM>` — "`<name>`"
 >   - Labels: `type:pi`, `priority:<priority>`, `area:<areas>`
 >   - Branch: `pi/<PI_NUM>-<slugified-name>` (linked to issue)
-> - Epic stubs:
->   - #`<EPIC1_NUM>` — "`<epic1 name>`"
->   - #`<EPIC2_NUM>` — "`<epic2 name>`"
->
-> **Updated:**
-> - PI #`<PI_NUM>` body: replaced `#TBD` with real epic numbers
 >
 > **Closed:** (if applicable)
 > - PI #`<OLD_PI_NUM>` — "`<old PI name>`"

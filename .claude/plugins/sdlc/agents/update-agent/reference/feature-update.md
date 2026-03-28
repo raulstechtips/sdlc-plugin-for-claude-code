@@ -18,6 +18,16 @@
 
 **The `gh issue edit --body` flag replaces the ENTIRE body.** There is no partial edit. Always use the read-modify-write pattern.
 
+### Step 0: Ensure Branch Exists
+
+Follow [`branch-creation.md`](../create-agent/reference/branch-creation.md) with:
+- `ISSUE_NUM` = `<N>` (the issue being updated)
+- `ISSUE_TITLE` = `<current issue title>`
+- `LEVEL` = `feature`
+- `PARENT_ISSUE` = `<parent issue number from body's ## Parent section>`
+
+This is idempotent — if a branch is already linked, this step is a no-op.
+
 ### Step 1: Read current body
 
 ```bash

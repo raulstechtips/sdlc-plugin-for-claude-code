@@ -125,19 +125,20 @@ Is this a reshape? (draft has ## Changes section)
 │   │   1. Dispatch create-agent (handles git add + commit)
 │   ├── PI:
 │   │   1. Dispatch create-agent for PI → receive PI issue number
-│   │   2. Dispatch create-agents in parallel for each epic in ## Epics checklist (each gets parent-pi = new number)
+│   │   2. Dispatch create-agents in parallel for each epic in ## Epics checklist (each gets parent-pi = new number, stub: true)
 │   │   3. Collect all epic issue numbers
 │   │   4. Dispatch update-agent to backfill PI body: replace each #TBD with real epic number
 │   ├── Epic:
 │   │   1. Dispatch create-agent for epic → receive issue number
-│   │   2. Dispatch create-agents in parallel for each feature in ## Features checklist (each gets parent-epic = new number)
+│   │   2. Dispatch create-agents in parallel for each feature in ## Features checklist (each gets parent-epic = new number, stub: true)
 │   │   3. Collect all feature issue numbers
 │   │   4. Dispatch update-agent to backfill epic body: replace each #TBD with real feature number
 │   ├── Feature (size:large):
 │   │   1. Dispatch create-agent for feature → receive issue number
-│   │   2. Dispatch create-agents in parallel for each story in ## Stories checklist (each gets parent-feature = new number, parent-epic from draft frontmatter)
-│   │   3. Collect all story issue numbers
-│   │   4. Dispatch update-agent to backfill feature body: replace each #TBD with real story number
+│   │   2. For each story in ## Stories checklist, evaluate whether the brainstorm produced enough context (acceptance criteria, file scope, technical notes) to write a full story body. If yes, pass a complete body; if not, pass stub: true with name + one-line description + parent links.
+│   │   3. Dispatch create-agents in parallel for each story (each gets parent-feature = new number, parent-epic from draft frontmatter, and either a full body or stub: true per the evaluation above)
+│   │   4. Collect all story issue numbers
+│   │   5. Dispatch update-agent to backfill feature body: replace each #TBD with real story number
 │   ├── Feature (size:small):
 │   │   1. Dispatch create-agent for feature (no children)
 │   └── Story:
@@ -151,6 +152,7 @@ Is this a reshape? (draft has ## Changes section)
 To create-agent:
 - Draft file path (or inline body for stubs)
 - Artifact level
+- `stub: true` flag when the child is a stub — always for PI→epics and epic→features; for feature→stories only when brainstorm context is insufficient
 - For child stubs: the child name, one-line description from the parent's checklist, parent issue numbers, inherited priority and area labels
 
 To update-agent:
