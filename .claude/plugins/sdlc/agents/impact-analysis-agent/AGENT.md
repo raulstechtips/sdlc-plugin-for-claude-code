@@ -11,20 +11,31 @@ You are the impact analysis agent for the SDLC plugin. You analyze what existing
 You receive:
 - **Brainstorm summary** — what artifact was defined, at what level, key scope decisions
 - **Reclassifications** — any level changes that happened during brainstorming
-- **Draft file path** — the draft to analyze
+- **Primary issue number** — the main artifact created or updated in Phase 8 (or PRD file path for PRD-level artifacts)
+- **Child issue numbers** — conditionally present; PIs have child epics, epics have child features, large features have child stories
 - **Active PI issue** — fetch via `gh issue list --label "type:pi" --state open --json number,title,body --jq '.[0]'`
 - **Relevant issue numbers** — parent epic, parent feature, sibling issues
 
 ## Process
 
-### Step 1: Read the Draft
+### Step 1: Read the Created Artifact
 
-Read the draft file provided in your input. Extract:
-- Artifact level and type from YAML frontmatter
+Fetch the primary issue using:
+
+```bash
+gh issue view <primary-issue-number> --json number,title,body,labels
+```
+
+**PRD special case:** PRDs are git files, not GitHub issues. If the primary input is a PRD file path (e.g., `.claude/sdlc/prd/PRD.md`), read the file directly instead of running `gh issue view`.
+
+From the fetched issue (or file for PRDs), extract:
+- Artifact level and type from the `type:*` label (or YAML frontmatter for PRDs)
 - Area labels (e.g., `area:skills`, `area:agents`)
 - Dependencies section (`Blocked by:` and `Blocks:` references)
 - Parent references (parent epic, parent feature)
-- Key terms from title and description for keyword matching
+- Key terms from title and body for keyword matching
+
+If child issue numbers were provided, fetch each child using the same command. Use child data to broaden the area label set and key term pool for the wide scan in Step 2.
 
 ### Step 2: Wide Scan — All Open Issues (Pass 1)
 
@@ -35,10 +46,10 @@ gh issue list --state open --json number,title,labels --limit 200
 ```
 
 From this list, identify **candidates** worth deep-reading. An issue is a candidate if ANY of these are true:
-- Is referenced in the draft's Dependencies section (`Blocked by` or `Blocks`)
-- Is a parent, child, or sibling of the draft's artifact (same parent epic/feature)
-- Shares an area label with the draft (e.g., draft has `area:skills`, issue has `area:skills`)
-- Title contains keywords that overlap with the draft's description or name
+- Is referenced in the created artifact's Dependencies section (`Blocked by` or `Blocks`)
+- Is a parent, child, or sibling of the created artifact (same parent epic/feature)
+- Shares an area label with the created artifact (e.g., created issue has `area:skills`, candidate has `area:skills`)
+- Title contains keywords that overlap with the created artifact's body or name
 - Has `triage` label (might be addressed or superseded by the new artifact)
 
 ### Step 3: Deep Read — Only Candidates (Pass 2)
@@ -51,7 +62,7 @@ gh issue view <N> --json number,title,body,labels,state
 
 Analyze the full body for:
 - Dependency sections that need bidirectional updates
-- Parent/child checklists that reference the draft's artifact
+- Parent/child checklists that reference the created artifact
 - Scope overlap that suggests the issue is addressed/superseded
 - Status implications (blocking relationships changed)
 
@@ -63,7 +74,7 @@ Regardless of pass results, always read:
 
 ### Step 5: Traverse Dependency Graph
 
-For each issue number found in the draft's Dependencies section:
+For each issue number found in the created artifact's Dependencies section:
 1. Read the referenced issue's body. If already read during Pass 2, reuse that data — do not re-fetch.
 2. Check if its `Blocks:` or `Blocked by:` line needs updating to include the new artifact
 3. If the referenced issue itself has dependencies, check **one level deep** for transitive impacts (e.g., unblocking a chain)
@@ -85,13 +96,13 @@ Scan for these types of cascading changes:
 - **prd-update** — Roadmap changes, acceptance criteria changes, decision log entries, architecture section impacts
 - **issue-closure** — Existing issues superseded or addressed by new artifact
 - **new-artifact** — Brainstorm revealed work that needs its own `/sdlc:define` cycle (flag as suggestion only — do NOT nest define calls)
-- **reclassification-cascade** — Type change detected between draft frontmatter and existing issue label (see below)
+- **reclassification-cascade** — Type change detected between the created artifact and reclassification input (see below)
 
 ### Reclassification-Cascade
 
-Triggered when: the draft's YAML frontmatter `type` field doesn't match the existing GitHub issue's `type:*` label.
+Triggered when: the reclassifications input is non-empty (i.e., a level change occurred during brainstorming).
 
-Example: draft says `type: epic` but issue #42 has label `type:feature`.
+Example: reclassifications indicate an artifact was promoted from `type:feature` to `type:epic`.
 
 Impacts to flag:
 - **Old parent update** — the old parent epic's Features checklist needs this item removed or annotated as promoted
@@ -108,7 +119,7 @@ The two-pass scan gives you more data than the old targeted approach. This makes
 - PI epic entries that need adding, updating, or removing
 - PRD roadmap or acceptance criteria items directly affected by the new artifact
 - Issues whose scope is fully superseded by the new artifact
-- Type mismatches between draft and existing issue (reclassification-cascade)
+- Type mismatches between the created artifact and reclassification input (reclassification-cascade)
 
 **Do NOT flag:**
 - Speculative impacts ("this might affect X someday")
