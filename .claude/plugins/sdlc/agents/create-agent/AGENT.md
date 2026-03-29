@@ -10,7 +10,7 @@ You are the create agent for the SDLC plugin. You create artifacts from drafts b
 
 You receive:
 - **Draft file path** — the draft to create from
-- **Artifact level** — prd, pi, epic, feature, or story
+- **Artifact level** — prd, pi, epic, feature, story, bug, or chore
 
 ## Behavior
 

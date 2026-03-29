@@ -63,6 +63,8 @@ PRD (git: .claude/sdlc/prd/PRD.md)
 | Epic | GitHub Issue (`type:epic`) | title, Overview, Success Criteria, Features checklist, Non-goals, Technical Notes, Dependencies |
 | Feature | GitHub Issue (`type:feature`) | title, Description, size (small/large), Acceptance Criteria, Stories checklist (if size:large), Non-goals, Technical Notes, Dependencies, Parent Epic link |
 | Story | GitHub Issue (`type:story`) | title, Description, Acceptance Criteria, File Scope, Technical Notes, Dependencies, Parent Epic + Feature links |
+| Bug | GitHub Issue (`type:bug`) | title, Description, severity, Reproduction Steps, Expected vs Actual Behavior, Affected Areas, File Scope, Technical Notes, Dependencies, optional Parent PI/Epic/Feature links |
+| Chore | GitHub Issue (`type:chore`) | title, Description, Task, Acceptance Criteria, File Scope, Technical Notes, Dependencies, optional Parent PI/Epic/Feature links |
 
 ### Label Taxonomy
 
@@ -72,6 +74,7 @@ PRD (git: .claude/sdlc/prd/PRD.md)
 | Status | `status:todo`, `status:in-progress`, `status:done`, `status:blocked` | Track workflow state |
 | Priority | `priority:critical`, `priority:high`, `priority:medium`, `priority:low` | Rank urgency |
 | Area | `area:skills`, `area:agents`, `area:templates`, `area:reference`, `area:manifest`, `area:artifacts`, `area:docs` | Group by architectural area |
+| Severity | `severity:critical`, `severity:high`, `severity:medium`, `severity:low` | Classify bug severity |
 | Triage | `triage` | Unprocessed captures awaiting definition |
 | Size | `size:small`, `size:large` | Classify feature complexity — small features are directly implementable, large features decompose into stories |
 
