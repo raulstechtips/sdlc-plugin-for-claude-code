@@ -128,6 +128,7 @@ The two-pass scan gives you more data than the old targeted approach. This makes
 - Issues that share area labels but have no actual content overlap
 - Keyword matches that are coincidental (e.g., both mention "authentication" but in unrelated contexts)
 - Transitive dependency chains deeper than 2 levels (mention as "potential impact for user to investigate" only)
+- Parent checklist updates for bugs or chores — bugs and chores are NOT tracked in parent checklists (epic Features lists, feature Stories lists, PI Epics lists). They relate to parents via their own `## Parent` section only. Do not suggest adding a bug or chore to any parent's child checklist.
 
 ## Output Format
 

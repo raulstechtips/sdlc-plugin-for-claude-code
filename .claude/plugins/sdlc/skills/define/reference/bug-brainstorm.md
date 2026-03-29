@@ -13,6 +13,8 @@ Internal checklist for the define skill. Weave these into natural conversation �
 - Are there related bugs or issues?
 - What's the fix scope? (one file, multiple areas, architectural)
 - Does this block or get blocked by any existing work?
+- Does this bug belong to an existing PI, epic, or feature — or is it standalone?
+- Are there technical considerations for the fix? (patterns to follow, constraints, root cause analysis)
 
 ## Context to load
 
@@ -20,10 +22,12 @@ Internal checklist for the define skill. Weave these into natural conversation �
 - Check recent git history for changes in affected areas
 - Check open issues for related work: `gh issue list --label "type:bug"`
 - Read `.claude/sdlc/prd/PRD.md` — check Architecture and Security Constraints if relevant
+- **If parented:** read the parent PI/epic/feature issue(s) via `gh issue view <parent> --json title,body,labels`. Load the parent's Technical Notes section if it exists — the bug's Technical Notes should build on parent context.
+- **If standalone:** skip parent loading — the bug's Technical Notes captures brainstorm context independently.
 
 ## Scope note
 
-Bugs have no size/decomposition concept (unlike features with size:small/large). A bug is always a single unit of work. There is no parent to load — bugs are peers to the hierarchy.
+Bugs have no size/decomposition concept (unlike features with size:small/large). A bug is always a single unit of work. Bugs can optionally be parented to a PI, epic, or feature, or remain standalone. Bugs are NOT tracked in parent checklists — they relate to parents via the `## Parent` section only.
 
 ## Research agent
 

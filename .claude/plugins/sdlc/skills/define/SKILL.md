@@ -34,7 +34,6 @@ You MUST create a task for each of these phases and complete them in order:
 Parse `$ARGUMENTS` for an optional level and optional identifier.
 
 - If level provided: load brainstorming guide from `${CLAUDE_PLUGIN_ROOT}/skills/define/reference/<level>-brainstorm.md`
-- **Exception — chore level:** load `${CLAUDE_PLUGIN_ROOT}/skills/define/reference/story-brainstorm.md` instead (no `chore-brainstorm.md` exists). Note: parent-related questions in the story guide are conditional for chores — standalone chores skip them.
 - If no level: proceed without a guide — the brainstorm will discover the level
 - Read `.claude/sdlc/prd/PRD.md` for project context
 - Check for active PI issue: `gh issue list --label "type:pi" --state open --json number,title,body --jq '.[0]'`
@@ -49,7 +48,7 @@ Parse `$ARGUMENTS` for an optional level and optional identifier.
   - **No issue number and no existing draft** = new artifact
 - If args contain an issue number (#N) with no level keyword: infer level from the fetched issue's labels (reuse the `gh issue view` result from above):
   - Has `type:bug` label → set level to `bug`, load `bug-brainstorm.md` (via the generic rule)
-  - Has `type:chore` label → set level to `chore`, load `story-brainstorm.md` (via the chore exception)
+  - Has `type:chore` label → set level to `chore`, load `chore-brainstorm.md` (via the generic rule)
   - Has `triage` label → ask the user what level this should become (may be feature, story, bug, or chore)
   - Has any other `type:*` label (e.g., `type:feature`, `type:epic`, `type:story`, `type:pi`) → infer level from the label name, load the corresponding brainstorm guide
 
@@ -149,8 +148,12 @@ Is this a reshape? (draft has ## Changes section)
 │   │   5. Dispatch update-agent to backfill feature body: replace each #TBD with real story number
 │   ├── Feature (size:small):
 │   │   1. Dispatch create-agent for feature (no children)
-│   └── Story:
-│       1. Dispatch create-agent for story (no children)
+│   ├── Story:
+│   │   1. Dispatch create-agent for story (no children)
+│   ├── Bug:
+│   │   1. Dispatch create-agent for bug (no children)
+│   └── Chore:
+│       1. Dispatch create-agent for chore (no children)
 ~~~
 
 **Draft cleanup:** After all Phase 8 agents complete successfully (primary created, all children created, backfill complete), delete the working draft:
@@ -196,6 +199,8 @@ Informational guidance — no dispatching, no "want me to create?". Content is l
 - **Feature (large)** → "Stories #A, #B created as stubs. Run `/sdlc:define story #A` to flesh one out."
 - **Feature (small)** → "Feature is directly implementable. Ready to develop."
 - **Story** → "Next unfinished story under this feature is #B, or all stories defined — ready to develop."
+- **Bug** → "Bug is ready to develop. Run `/sdlc:setup-dev #N` to start."
+- **Chore** → "Chore is ready to develop. Run `/sdlc:setup-dev #N` to start."
 - **PRD** → "Committed. Run `/sdlc:define epic` to start decomposing."
 - **PI** → "Created as GitHub Issue. Run `/sdlc:define epic` to start decomposing."
 
@@ -208,8 +213,8 @@ Informational guidance — no dispatching, no "want me to create?". Content is l
 | Epic | PRD exists. PI exists. |
 | Feature | PRD exists. PI exists. Parent epic resolvable via `gh issue view`. |
 | Story | PRD exists. Parent feature and parent epic resolvable via `gh issue view`. |
-| Bug | PRD exists. No parent requirements — bugs are peers to the hierarchy. |
-| Chore | PRD exists. If parented, parent epic/feature resolvable via `gh issue view`. |
+| Bug | PRD exists. If parented, parent PI/epic/feature resolvable via `gh issue view`. |
+| Chore | PRD exists. If parented, parent PI/epic/feature resolvable via `gh issue view`. |
 
 If prerequisites are missing, tell the user what needs to exist first and suggest the appropriate `/sdlc:define` invocation.
 

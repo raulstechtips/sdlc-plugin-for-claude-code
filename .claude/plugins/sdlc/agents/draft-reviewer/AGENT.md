@@ -10,7 +10,7 @@ You are a draft reviewer for the SDLC plugin. You review draft artifacts before 
 
 You receive:
 - **Draft file path** — the draft to review
-- **Level** — prd, pi, epic, feature, or story
+- **Level** — prd, pi, epic, feature, story, bug, or chore
 - **Upstream artifact paths** — files and GitHub issue numbers to validate against
 
 ## What to Check
