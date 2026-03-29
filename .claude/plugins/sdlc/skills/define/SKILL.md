@@ -153,6 +153,14 @@ Is this a reshape? (draft has ## Changes section)
 │       1. Dispatch create-agent for story (no children)
 ~~~
 
+**Draft cleanup:** After all Phase 8 agents complete successfully (primary created, all children created, backfill complete), delete the working draft:
+
+```bash
+rm .claude/sdlc/drafts/<draft-filename>
+```
+
+Do NOT delete the draft if any Phase 8 agent fails — the draft is the recovery artifact.
+
 **Sequencing rule:** The primary artifact MUST be created first (sequential) because children need its issue number for their `## Parent` section. Children can then be created in parallel. The backfill step MUST wait for all children to complete.
 
 **What define passes to agents:**
@@ -173,7 +181,7 @@ To update-agent:
 
 The confirm-then-dispatch loop:
 
-1. Dispatch `impact-analysis-agent` with: summary of brainstorm decisions, reclassifications, draft file path, current PI path, relevant issue numbers
+1. Dispatch `impact-analysis-agent` with: summary of brainstorm decisions, reclassifications, primary issue number (or PRD file path for PRD artifacts), child issue numbers (only when Phase 8 created children), relevant issue numbers
 2. Agent returns structured list of impacts
 3. Present impacts to the user ONE AT A TIME
 4. Each impact is a mini-conversation — creative, back-and-forth, may involve follow-up questions
