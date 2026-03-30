@@ -1,6 +1,6 @@
 # SDLC Plugin for Claude Code
 
-Claude Code plugin (v0.3.0) providing structured SDLC management via GitHub Issues and git-versioned artifacts.
+Claude Code plugin (v0.4.0) providing structured SDLC management via GitHub Issues and git-versioned artifacts.
 
 ## Project Structure
 
