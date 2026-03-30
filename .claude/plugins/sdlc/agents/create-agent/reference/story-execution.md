@@ -40,16 +40,20 @@ Store the determined status for use in step 2.
 
 ### 2. Create the Story Issue
 
-Write the draft body (without YAML frontmatter) to a temp file and create the issue with the full set of labels:
+Write the draft body (without YAML frontmatter) to a temp file and create the issue with the full set of labels.
+
+Slugify the story name for the temp file path — lowercase, replace non-alphanumeric characters with hyphens, collapse consecutive hyphens, strip leading/trailing hyphens.
 
 ```bash
-cat <<'BODY' > /tmp/sdlc-story-body.md
+# SLUG = slugified <name> (e.g., "Fix temp file collision" -> "fix-temp-file-collision")
+
+cat <<'BODY' > /tmp/sdlc-story-<SLUG>-body.md
 <draft body content without frontmatter>
 BODY
 
 STORY_URL=$(gh issue create \
   --title "<name>" \
-  --body-file /tmp/sdlc-story-body.md \
+  --body-file /tmp/sdlc-story-<SLUG>-body.md \
   --label "type:story" \
   --label "priority:<priority>" \
   --label "area:<area1>" \
@@ -65,17 +69,7 @@ STORY_NUM=$(echo "$STORY_URL" | grep -o '[0-9]*$')
 - `status:todo` or `status:blocked` — exactly ONE status label, determined in step 1
 - Multiple area labels are fine: `--label "area:auth" --label "area:api"`
 
-### 3. Create and Link Branch
-
-Follow [`branch-creation.md`](branch-creation.md) with:
-- `ISSUE_NUM` = `<STORY_NUM>`
-- `ISSUE_TITLE` = `<name>`
-- `LEVEL` = `story`
-- `PARENT_ISSUE` = `<parent-feature>` (from draft frontmatter field `parent-feature`)
-
-**Note:** The immediate parent for branching is the **feature**, not the epic, even though the story body's `## Parent` section lists both.
-
-### 4. Update Parent Feature's Stories Checklist
+### 3. Update Parent Feature's Stories Checklist
 
 Read the parent feature's body and replace the `#TBD` placeholder next to this story's name with the real issue number.
 
@@ -90,7 +84,7 @@ echo "$UPDATED_FEAT_BODY" | gh issue edit <parent-feature> --body-file -
 ```
 
 
-### 5. Bidirectional Dependency Linking
+### 4. Bidirectional Dependency Linking
 
 If the story draft has `Blocked by: #N, #M` in its Dependencies section:
 
@@ -113,18 +107,19 @@ BLOCKER_BODY=$(gh issue view <N> --json body --jq '.body')
 echo "$UPDATED_BLOCKER_BODY" | gh issue edit <N> --body-file -
 ```
 
-### 6. Clean Up Temp Files
+### 5. Clean Up Temp Files
 
 ```bash
-rm -f /tmp/sdlc-story-body.md
+rm -f /tmp/sdlc-story-<SLUG>-body.md
 ```
+
+**Note:** Stories never get branches at creation time. Use `/sdlc:setup-dev` to create a story branch when development begins.
 
 ## Report Format
 
 > **Created:**
 > - Story: #`<STORY_NUM>` — "`<name>`"
 >   - Labels: `type:story`, `priority:<priority>`, `area:<areas>`, `<status>`
->   - Branch: `story/<STORY_NUM>-<slugified-name>` (linked to issue, branched from parent feature's branch)
 >   - Status rationale: `<"all blockers satisfied" or "blocked by #N (status:in-progress)">`
 >
 > **Updated:**

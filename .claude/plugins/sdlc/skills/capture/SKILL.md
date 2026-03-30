@@ -79,13 +79,17 @@ Load the template for the confirmed type from `${CLAUDE_PLUGIN_ROOT}/templates/<
 - `## Expected vs Actual Behavior` — from description or `[TBD]`
 - `## Affected Areas` — if mentioned, otherwise `[TBD]`
 - `## File Scope` — if mentioned, otherwise `[TBD]`
+- `## Technical Notes` — `[TBD]` (filled by define)
 - `## Dependencies` — `none` (capture doesn't assess dependencies)
+- **Severity:** Ask the user for severity (critical/high/medium/low) if not already clear from the description. Default suggestion: `medium` unless the description indicates otherwise.
+- **Priority:** Ask the user for priority (critical/high/medium/low) alongside severity. Default suggestion: match severity unless the user indicates otherwise.
 
 **Chore — fill from description:**
 - `## Description` — what needs doing and why
 - `## Task` — the specific work
 - `## Acceptance Criteria` — if determinable, otherwise `[TBD]`
 - `## File Scope` — if mentioned, otherwise `[TBD]`
+- `## Technical Notes` — `[TBD]` (filled by define)
 - `## Dependencies` — `none`
 - No `## Parent` section at capture time (standalone by default; can be added via `/sdlc:define chore #N` later)
 
@@ -116,7 +120,7 @@ Wait for user approval. Incorporate any feedback. Do NOT create the issue until 
 
 Create the issue with the appropriate labels:
 
-- **Bug:** `--label "type:bug"` (also add `--label "severity:<level>"` if severity was determined during capture)
+- **Bug:** `--label "type:bug"`, `--label "severity:<level>"`, and `--label "priority:<level>"` (severity and priority are always captured in Step 3)
 - **Chore:** `--label "type:chore"`
 - **Triage:** `--label "triage"`
 

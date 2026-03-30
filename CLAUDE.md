@@ -1,6 +1,6 @@
 # SDLC Plugin for Claude Code
 
-Claude Code plugin (v0.3.0) providing structured SDLC management via GitHub Issues and git-versioned artifacts.
+Claude Code plugin (v0.4.0) providing structured SDLC management via GitHub Issues and git-versioned artifacts.
 
 ## Project Structure
 
@@ -25,7 +25,7 @@ docs/                          # Research and design documents
 Skills are invoked as slash commands. The lifecycle:
 
 1. `/sdlc:init` — bootstrap labels and directories (once, after PRD exists)
-2. `/sdlc:define [level]` — brainstorm, draft, and execute artifacts (dispatches create-agent/update-agent)
+2. `/sdlc:define [level] [#N]` — brainstorm, draft, and execute artifacts (dispatches create-agent/update-agent). When given an issue number, assesses whether the issue needs first-time definition or reshaping.
 3. `/sdlc:status` — read-only project briefing
 4. `/sdlc:reconcile` — audit and fix label drift
 5. `/sdlc:capture` — type-aware capture of bugs, chores, and triage items

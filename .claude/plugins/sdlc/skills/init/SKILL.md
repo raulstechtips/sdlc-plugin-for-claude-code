@@ -49,7 +49,7 @@ Read .claude/sdlc/prd/PRD.md
 
 If the file does not exist, report:
 
-> "No PRD found at `.claude/sdlc/prd/PRD.md`. Run `sdlc:define prd` followed by `sdlc:create prd` first."
+> "No PRD found at `.claude/sdlc/prd/PRD.md`. Run `sdlc:define prd` first."
 
 STOP. Do not proceed further.
 
@@ -92,9 +92,15 @@ gh label create "priority:high" --color "d93f0b" --force
 gh label create "priority:medium" --color "fbca04" --force
 gh label create "priority:low" --color "c5def5" --force
 
-# Size labels (yellow-green)
+# Size labels (yellow-green gradient: lighter = smaller)
 gh label create "size:small" --color "e4e669" --force
-gh label create "size:large" --color "e4e669" --force
+gh label create "size:large" --color "c9c642" --force
+
+# Severity labels (red gradient: darkest = most severe)
+gh label create "severity:critical" --color "b60205" --force
+gh label create "severity:high" --color "d93f0b" --force
+gh label create "severity:medium" --color "fbca04" --force
+gh label create "severity:low" --color "c5def5" --force
 
 # Triage (yellow)
 gh label create "triage" --color "fbca04" --force
@@ -159,13 +165,13 @@ If any are missing, suggest: "Consider enabling [plugin] for [benefit]."
 
 Present a summary:
 
-Compute label counts from the labels actually created in Step 3: count the universal labels (type + status + priority + size + triage) and the area labels separately, then sum for the total.
+Compute label counts from the labels actually created in Step 3: count the universal labels (type + status + priority + severity + size + triage) and the area labels separately, then sum for the total.
 
 ```
 ## SDLC Init Complete
 
 **Labels:**
-- Universal: <count> labels (type, status, priority, size, triage)
+- Universal: <count> labels (type, status, priority, severity, size, triage)
 - Project areas: <count> labels from PRD Label Taxonomy
 - Total: <sum> labels ensured
 

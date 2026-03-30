@@ -2,7 +2,7 @@
 name: define
 description: Use when defining new SDLC artifacts (PRD, PI, epic, feature, story, bug, chore) or reshaping existing ones through collaborative brainstorming that produces a reviewable local draft.
 allowed-tools: Read, Edit, Write, Bash, Grep, Glob, Agent
-argument-hint: "[level] [identifier]"
+argument-hint: "[level] [#N]"
 ---
 
 I'm using the sdlc:define skill to define/reshape an SDLC artifact.
@@ -34,16 +34,23 @@ You MUST create a task for each of these phases and complete them in order:
 Parse `$ARGUMENTS` for an optional level and optional identifier.
 
 - If level provided: load brainstorming guide from `${CLAUDE_PLUGIN_ROOT}/skills/define/reference/<level>-brainstorm.md`
-- **Exception — chore level:** load `${CLAUDE_PLUGIN_ROOT}/skills/define/reference/story-brainstorm.md` instead (no `chore-brainstorm.md` exists). Note: parent-related questions in the story guide are conditional for chores — standalone chores skip them.
 - If no level: proceed without a guide — the brainstorm will discover the level
 - Read `.claude/sdlc/prd/PRD.md` for project context
 - Check for active PI issue: `gh issue list --label "type:pi" --state open --json number,title,body --jq '.[0]'`
 - Check pre-flight requirements (see Pre-Flight Checks below)
-- Detect new vs reshape: issue number in args = reshape; "reshape/rethink/revise/update" keywords = reshape; existing draft in drafts dir = ask user
-- If args contain only an issue number (#N) with no level keyword: check the issue's labels via `gh issue view <N> --json labels`:
+- Detect new vs reshape:
+  - **Issue number in args** → fetch the issue via `gh issue view <N> --json title,body,labels`. Then assess the body content:
+    - Read the body and judge whether this is a **fully-defined artifact** (structured template sections filled with substantive content) or a **stub/incomplete issue** (minimal body, missing template sections, placeholder text like `[TBD]`, or just a short description with parent links).
+    - Present your assessment to the user: "This issue looks like [a stub that needs first-time definition / a well-defined artifact — would you like to reshape it?]"
+    - Route based on the user's confirmation: first-time definition → treat as **new**; reshape → treat as **reshape**.
+    - Use your own judgment on content completeness — no fixed heuristic rules. The user confirmation is the safety net.
+  - **Existing draft** in `.claude/sdlc/drafts/` dir for this artifact (check after the issue assessment above, if applicable) = ask user whether to resume the draft or start fresh
+  - **No issue number and no existing draft** = new artifact
+- If args contain an issue number (#N) with no level keyword: infer level from the fetched issue's labels (reuse the `gh issue view` result from above):
   - Has `type:bug` label → set level to `bug`, load `bug-brainstorm.md` (via the generic rule)
-  - Has `type:chore` label → set level to `chore`, load `story-brainstorm.md` (via the chore exception)
+  - Has `type:chore` label → set level to `chore`, load `chore-brainstorm.md` (via the generic rule)
   - Has `triage` label → ask the user what level this should become (may be feature, story, bug, or chore)
+  - Has any other `type:*` label (e.g., `type:feature`, `type:epic`, `type:story`, `type:pi`) → infer level from the label name, load the corresponding brainstorm guide
 
 ### Phase 2: Creative Brainstorming
 
@@ -85,7 +92,7 @@ Wait for the user's choice before proceeding.
 
 Load the template from `${CLAUDE_PLUGIN_ROOT}/templates/<level>-template.md`. Pour everything from the brainstorm into the rigid format. Structured, consistent output every time.
 
-Write to `.claude/sdlc/drafts/<level>-<name>.md` (new) or `.claude/sdlc/drafts/<level>-<issue-number>.md` (reshape). Ensure the drafts directory exists.
+Write to `.claude/sdlc/drafts/<level>-<name>.md` (new, no issue number) or `.claude/sdlc/drafts/<level>-<issue-number>.md` (reshape, or new from a stub with a known issue number). Ensure the drafts directory exists.
 
 For reshapes, include a `## Changes` section at the end:
 
@@ -125,24 +132,37 @@ Is this a reshape? (draft has ## Changes section)
 │   │   1. Dispatch create-agent (handles git add + commit)
 │   ├── PI:
 │   │   1. Dispatch create-agent for PI → receive PI issue number
-│   │   2. Dispatch create-agents in parallel for each epic in ## Epics checklist (each gets parent-pi = new number)
+│   │   2. Dispatch create-agents in parallel for each epic in ## Epics checklist (each gets parent-pi = new number, stub: true)
 │   │   3. Collect all epic issue numbers
 │   │   4. Dispatch update-agent to backfill PI body: replace each #TBD with real epic number
 │   ├── Epic:
 │   │   1. Dispatch create-agent for epic → receive issue number
-│   │   2. Dispatch create-agents in parallel for each feature in ## Features checklist (each gets parent-epic = new number)
+│   │   2. Dispatch create-agents in parallel for each feature in ## Features checklist (each gets parent-epic = new number, stub: true)
 │   │   3. Collect all feature issue numbers
 │   │   4. Dispatch update-agent to backfill epic body: replace each #TBD with real feature number
 │   ├── Feature (size:large):
 │   │   1. Dispatch create-agent for feature → receive issue number
-│   │   2. Dispatch create-agents in parallel for each story in ## Stories checklist (each gets parent-feature = new number, parent-epic from draft frontmatter)
-│   │   3. Collect all story issue numbers
-│   │   4. Dispatch update-agent to backfill feature body: replace each #TBD with real story number
+│   │   2. For each story in ## Stories checklist, evaluate whether the brainstorm produced enough context (acceptance criteria, file scope, technical notes) to write a full story body. If yes, pass a complete body; if not, pass stub: true with name + one-line description + parent links.
+│   │   3. Dispatch create-agents in parallel for each story (each gets parent-feature = new number, parent-epic from draft frontmatter, and either a full body or stub: true per the evaluation above)
+│   │   4. Collect all story issue numbers
+│   │   5. Dispatch update-agent to backfill feature body: replace each #TBD with real story number
 │   ├── Feature (size:small):
 │   │   1. Dispatch create-agent for feature (no children)
-│   └── Story:
-│       1. Dispatch create-agent for story (no children)
+│   ├── Story:
+│   │   1. Dispatch create-agent for story (no children)
+│   ├── Bug:
+│   │   1. Dispatch create-agent for bug (no children)
+│   └── Chore:
+│       1. Dispatch create-agent for chore (no children)
 ~~~
+
+**Draft cleanup:** After all Phase 8 agents complete successfully (primary created, all children created, backfill complete), delete the working draft:
+
+```bash
+rm .claude/sdlc/drafts/<draft-filename>
+```
+
+Do NOT delete the draft if any Phase 8 agent fails — the draft is the recovery artifact.
 
 **Sequencing rule:** The primary artifact MUST be created first (sequential) because children need its issue number for their `## Parent` section. Children can then be created in parallel. The backfill step MUST wait for all children to complete.
 
@@ -151,6 +171,7 @@ Is this a reshape? (draft has ## Changes section)
 To create-agent:
 - Draft file path (or inline body for stubs)
 - Artifact level
+- `stub: true` flag when the child is a stub — always for PI→epics and epic→features; for feature→stories only when brainstorm context is insufficient
 - For child stubs: the child name, one-line description from the parent's checklist, parent issue numbers, inherited priority and area labels
 
 To update-agent:
@@ -163,7 +184,7 @@ To update-agent:
 
 The confirm-then-dispatch loop:
 
-1. Dispatch `impact-analysis-agent` with: summary of brainstorm decisions, reclassifications, draft file path, current PI path, relevant issue numbers
+1. Dispatch `impact-analysis-agent` with: summary of brainstorm decisions, reclassifications, primary issue number (or PRD file path for PRD artifacts), child issue numbers (only when Phase 8 created children), relevant issue numbers
 2. Agent returns structured list of impacts
 3. Present impacts to the user ONE AT A TIME
 4. Each impact is a mini-conversation — creative, back-and-forth, may involve follow-up questions
@@ -178,6 +199,8 @@ Informational guidance — no dispatching, no "want me to create?". Content is l
 - **Feature (large)** → "Stories #A, #B created as stubs. Run `/sdlc:define story #A` to flesh one out."
 - **Feature (small)** → "Feature is directly implementable. Ready to develop."
 - **Story** → "Next unfinished story under this feature is #B, or all stories defined — ready to develop."
+- **Bug** → "Bug is ready to develop. Run `/sdlc:setup-dev #N` to start."
+- **Chore** → "Chore is ready to develop. Run `/sdlc:setup-dev #N` to start."
 - **PRD** → "Committed. Run `/sdlc:define epic` to start decomposing."
 - **PI** → "Created as GitHub Issue. Run `/sdlc:define epic` to start decomposing."
 
@@ -190,8 +213,8 @@ Informational guidance — no dispatching, no "want me to create?". Content is l
 | Epic | PRD exists. PI exists. |
 | Feature | PRD exists. PI exists. Parent epic resolvable via `gh issue view`. |
 | Story | PRD exists. Parent feature and parent epic resolvable via `gh issue view`. |
-| Bug | PRD exists. No parent requirements — bugs are peers to the hierarchy. |
-| Chore | PRD exists. If parented, parent epic/feature resolvable via `gh issue view`. |
+| Bug | PRD exists. If parented, parent PI/epic/feature resolvable via `gh issue view`. |
+| Chore | PRD exists. If parented, parent PI/epic/feature resolvable via `gh issue view`. |
 
 If prerequisites are missing, tell the user what needs to exist first and suggest the appropriate `/sdlc:define` invocation.
 

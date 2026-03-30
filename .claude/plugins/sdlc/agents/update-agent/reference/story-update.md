@@ -15,14 +15,18 @@
 - 3+ fields changing
 - Story needs to be split
 
+Stories do not have branches created by the update agent. Use `/sdlc:setup-dev` to create a story branch.
+
 ## Read-Modify-Write Pattern
 
 **The `gh issue edit --body` flag replaces the ENTIRE body.** There is no partial edit. Always use the read-modify-write pattern.
 
 ### Step 1: Read current body
 
+Slugify the current issue title for the temp file path — lowercase, replace non-alphanumeric characters with hyphens, collapse consecutive hyphens, strip leading/trailing hyphens.
+
 ```bash
-gh issue view <N> --json body --jq '.body' > /tmp/sdlc-update-body.md
+gh issue view <N> --json body --jq '.body' > /tmp/sdlc-story-<N>-<SLUG>-body.md
 ```
 
 Also read the full issue metadata for context:
@@ -33,7 +37,7 @@ gh issue view <N> --json number,title,body,labels,state
 
 ### Step 2: Modify the specific section
 
-Read `/tmp/sdlc-update-body.md`, identify the section to change, and modify ONLY that section.
+Read `/tmp/sdlc-story-<N>-<SLUG>-body.md`, identify the section to change, and modify ONLY that section.
 
 Common sections in a story body:
 - `## Description` — story description
@@ -46,7 +50,7 @@ Common sections in a story body:
 ### Step 3: Write back the full updated body
 
 ```bash
-gh issue edit <N> --body-file /tmp/sdlc-update-body.md
+gh issue edit <N> --body-file /tmp/sdlc-story-<N>-<SLUG>-body.md
 ```
 
 ### Label Changes
@@ -72,7 +76,7 @@ gh issue edit <N> --title "feat(auth): new story title"
 ### Clean Up
 
 ```bash
-rm -f /tmp/sdlc-update-body.md
+rm -f /tmp/sdlc-story-<N>-<SLUG>-body.md
 ```
 
 ## Dependency Maintenance
@@ -86,10 +90,10 @@ When changing `Blocked by` or `Blocks` in the Dependencies section:
 
 ```bash
 # Read the blocker's body
-gh issue view <X> --json body --jq '.body' > /tmp/sdlc-blocker-body.md
+gh issue view <X> --json body --jq '.body' > /tmp/sdlc-story-<N>-<SLUG>-blocker-body.md
 ```
 
-Modify `/tmp/sdlc-blocker-body.md`:
+Modify `/tmp/sdlc-story-<N>-<SLUG>-blocker-body.md`:
 - If `Blocks: none` -> replace with `Blocks: #<N>`
 - If `Blocks: #A` -> change to `Blocks: #A, #<N>`
 - If `Blocks: #A, #B` -> change to `Blocks: #A, #B, #<N>`
@@ -101,14 +105,21 @@ Modify `/tmp/sdlc-blocker-body.md`:
   ```
 
 ```bash
-gh issue edit <X> --body-file /tmp/sdlc-blocker-body.md
-rm -f /tmp/sdlc-blocker-body.md
+gh issue edit <X> --body-file /tmp/sdlc-story-<N>-<SLUG>-blocker-body.md
+rm -f /tmp/sdlc-story-<N>-<SLUG>-blocker-body.md
 ```
 
 ### Removing a blocker (`Blocked by: #X`)
 
 1. Update this story's body: remove `#X` from the `Blocked by:` line (if it was the only one, set to `none`).
 2. Update issue #X's body: remove `#<N>` from its `Blocks:` line (if it was the only one, set to `none`).
+
+```bash
+gh issue view <X> --json body --jq '.body' > /tmp/sdlc-story-<N>-<SLUG>-blocker-body.md
+# Remove #<N> from the "Blocks:" line
+gh issue edit <X> --body-file /tmp/sdlc-story-<N>-<SLUG>-blocker-body.md
+rm -f /tmp/sdlc-story-<N>-<SLUG>-blocker-body.md
+```
 
 ### Circular Dependency Check
 
@@ -165,14 +176,14 @@ After updating a story:
 
 ```bash
 # Read parent feature body
-gh issue view <parent-feature> --json body --jq '.body' > /tmp/sdlc-parent-body.md
+gh issue view <parent-feature> --json body --jq '.body' > /tmp/sdlc-story-<N>-<SLUG>-parent-body.md
 ```
 
 Find the line referencing this story's old title and replace it with the new title. Keep the issue number reference intact.
 
 ```bash
-gh issue edit <parent-feature> --body-file /tmp/sdlc-parent-body.md
-rm -f /tmp/sdlc-parent-body.md
+gh issue edit <parent-feature> --body-file /tmp/sdlc-story-<N>-<SLUG>-parent-body.md
+rm -f /tmp/sdlc-story-<N>-<SLUG>-parent-body.md
 ```
 
 - **If deps changed**: bidirectional updates and status recalculation handled in Dependency Maintenance above.

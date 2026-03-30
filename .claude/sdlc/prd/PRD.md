@@ -60,9 +60,11 @@ PRD (git: .claude/sdlc/prd/PRD.md)
 |----------|---------|-----------|
 | PRD | `.claude/sdlc/prd/PRD.md` (git) | name, version, created, Overview, Tech Stack, Architecture, Data Models, API Contracts, Security Constraints, Roadmap, Acceptance Criteria, Out of Scope, Label Taxonomy, Decision Log |
 | PI | GitHub Issue (`type:pi`) | name, theme, Timeline (started, target), Goals, Epics (with scope seeds and #TBD placeholders), Dependencies, Worktree Strategy |
-| Epic | GitHub Issue (`type:epic`) | title, Overview, Success Criteria, Features checklist, Non-goals, Dependencies |
-| Feature | GitHub Issue (`type:feature`) | title, Description, size (small/large), Acceptance Criteria, Stories checklist (if size:large), Non-goals, Dependencies, Parent Epic link |
+| Epic | GitHub Issue (`type:epic`) | title, Overview, Success Criteria, Features checklist, Non-goals, Technical Notes, Dependencies |
+| Feature | GitHub Issue (`type:feature`) | title, Description, size (small/large), Acceptance Criteria, Stories checklist (if size:large), Non-goals, Technical Notes, Dependencies, Parent Epic link |
 | Story | GitHub Issue (`type:story`) | title, Description, Acceptance Criteria, File Scope, Technical Notes, Dependencies, Parent Epic + Feature links |
+| Bug | GitHub Issue (`type:bug`) | title, Description, severity, Reproduction Steps, Expected vs Actual Behavior, Affected Areas, File Scope, Technical Notes, Dependencies, optional Parent PI/Epic/Feature links |
+| Chore | GitHub Issue (`type:chore`) | title, Description, Task, Acceptance Criteria, File Scope, Technical Notes, Dependencies, optional Parent PI/Epic/Feature links |
 
 ### Label Taxonomy
 
@@ -72,6 +74,7 @@ PRD (git: .claude/sdlc/prd/PRD.md)
 | Status | `status:todo`, `status:in-progress`, `status:done`, `status:blocked` | Track workflow state |
 | Priority | `priority:critical`, `priority:high`, `priority:medium`, `priority:low` | Rank urgency |
 | Area | `area:skills`, `area:agents`, `area:templates`, `area:reference`, `area:manifest`, `area:artifacts`, `area:docs` | Group by architectural area |
+| Severity | `severity:critical`, `severity:high`, `severity:medium`, `severity:low` | Classify bug severity |
 | Triage | `triage` | Unprocessed captures awaiting definition |
 | Size | `size:small`, `size:large` | Classify feature complexity — small features are directly implementable, large features decompose into stories |
 
@@ -194,3 +197,4 @@ sdlc:init (once) → sdlc:define (brainstorm + execute) → sdlc:setup-dev → w
 | 2026-03-23 | PI migrated from git file to GitHub Issue | Unifies artifact model, closes branch hierarchy gap (main → PI → epic → feature → story), enables epic stub creation during PI define | Architecture, Create, Update, Init, Status |
 | 2026-03-23 | Remove type:spike from label taxonomy | Spike concept is unused — exploratory work is tracked via triage capture and promoted through define; a dedicated spike type adds complexity without value | Labels, Init, SDLC Guide |
 | 2026-03-23 | Remove retro skill; add finish-dev | Retro requires substantial Timeline API infrastructure with limited near-term value; finish-dev fills the critical gap of closing roll-up branches with proper PRs | Skill Inventory, Architecture, Roadmap |
+| 2026-03-28 | Branches created at define/develop time, not at stub creation; stories only get branches via setup-dev | Stub issues are placeholders — creating branches at stub time produces premature, likely-renamed branches with no associated work; setup-dev is the explicit signal that development is starting | Define (Phase 8), Execution References, Update References, setup-dev |

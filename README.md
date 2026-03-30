@@ -37,7 +37,7 @@ claude --plugin-dir .claude/plugins/sdlc
 | Skill | Command | Description |
 |-------|---------|-------------|
 | Init | `/sdlc:init` | Bootstrap SDLC infrastructure — creates GitHub labels, artifact directories, and checks project setup. Run once after creating a PRD. |
-| Define | `/sdlc:define [level]` | Brainstorm and produce artifacts through collaborative phases. Handles the full lifecycle: brainstorm, draft, review, execute, and impact analysis. |
+| Define | `/sdlc:define [level] [#N]` | Brainstorm and produce artifacts through collaborative phases. Handles the full lifecycle: brainstorm, draft, review, execute, and impact analysis. When given an issue number, assesses whether the issue needs first-time definition or reshaping. |
 | Capture | `/sdlc:capture [type:] description` | Quick-capture bugs, chores, and triage items with type detection and appropriate templates. |
 | Status | `/sdlc:status [area]` | Read-only project briefing — walks the hierarchy top-down, surfaces what's in progress, blocked, and ready. |
 | Reconcile | `/sdlc:reconcile [area]` | Audit and fix label drift — stale labels, unclosed parents, orphaned references, circular dependencies. |

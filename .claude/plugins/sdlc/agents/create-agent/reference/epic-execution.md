@@ -13,25 +13,32 @@
 - `## Success Criteria` — at least one checkbox item
 - `## Features` — at least one checklist item with `(#TBD)` placeholder
 
-Additional sections (Non-goals, Dependencies) are expected but not blocking.
+Additional sections (Non-goals, Technical Notes, Dependencies) are expected but not blocking.
+
+## Stub Mode
+
+If dispatched with `stub: true`, skip Step 2 (Create and Link Branch). All other steps execute normally.
 
 ## Execution Steps
 
 ### 1. Create the Epic Issue
 
-Write the draft body (without YAML frontmatter) to a temp file and create the issue:
+Write the draft body (without YAML frontmatter) to a temp file and create the issue.
+
+Slugify the epic name for the temp file path — lowercase, replace non-alphanumeric characters with hyphens, collapse consecutive hyphens, strip leading/trailing hyphens.
 
 ```bash
 # Strip frontmatter from draft, write body to temp file
 # (everything after the closing --- of the frontmatter)
+# SLUG = slugified <name> (e.g., "User Authentication" -> "user-authentication")
 
-cat <<'BODY' > /tmp/sdlc-epic-body.md
+cat <<'BODY' > /tmp/sdlc-epic-<SLUG>-body.md
 <draft body content without frontmatter>
 BODY
 
 EPIC_URL=$(gh issue create \
   --title "<name>" \
-  --body-file /tmp/sdlc-epic-body.md \
+  --body-file /tmp/sdlc-epic-<SLUG>-body.md \
   --label "type:epic" \
   --label "priority:<priority>" \
   --label "area:<area1>" \
@@ -81,7 +88,7 @@ gh issue edit <parent-pi> --body "$UPDATED_BODY"
 ### 5. Clean Up Temp Files
 
 ```bash
-rm -f /tmp/sdlc-epic-body.md
+rm -f /tmp/sdlc-epic-<SLUG>-body.md
 ```
 
 ## Report Format
@@ -89,7 +96,7 @@ rm -f /tmp/sdlc-epic-body.md
 > **Created:**
 > - Epic: #`<EPIC_NUM>` — "`<name>`"
 >   - Labels: `type:epic`, `priority:<priority>`, `area:<areas>`
->   - Branch: `epic/<EPIC_NUM>-<slugified-name>` (linked to issue)
+>   - Branch: `epic/<EPIC_NUM>-<slugified-name>` (linked to issue) — omit if stub mode
 >
 > **Updated:**
 > - Blocker #`<N>` body: added `Blocks: #<EPIC_NUM>` to Dependencies
